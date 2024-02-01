@@ -1,4 +1,6 @@
-﻿using System.Runtime.InteropServices;
+﻿using System.IO;
+using System.Runtime.InteropServices;
+using XeSharp.Device.Enums;
 using XeSharp.Device.FileSystem;
 using XeSharp.Device.Title;
 using XeSharp.Helpers;
@@ -43,9 +45,25 @@ namespace XeSharp.Device
             FileSystem = new XeFileSystem(this, in_isFullFileSystemMap);
         }
 
-        public void ColdReboot()
+        public void Restart()
         {
             Client.SendCommand("magicboot cold");
+        }
+
+        public void Launch(string in_path, string in_args = "", EXeBootType in_bootType = EXeBootType.Title)
+        {
+            var cmd = $"magicboot";
+
+            if (in_bootType != EXeBootType.Title)
+                cmd += $" {in_bootType.ToString().ToLower()}";
+
+            if (!string.IsNullOrEmpty(in_path))
+                cmd += $" title=\"{FileSystem.GetNodeFromPath(in_path)}\"";
+
+            if (!string.IsNullOrEmpty(in_args))
+                cmd += $" cmdline=\"{in_args}\"";
+
+            Client.SendCommand(cmd);
         }
 
         public void Eject()

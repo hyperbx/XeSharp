@@ -20,6 +20,28 @@ namespace XeSharp.Device.FileSystem
             CurrentDirectory = GetDrivesRoot(in_isFullFileSystemMap);
         }
 
+        public string ToAbsolutePath(string in_path)
+        {
+            if (string.IsNullOrEmpty(in_path))
+                return in_path;
+
+            var result = FormatHelper.IsAbsolutePath(in_path)
+                ? in_path
+                : Path.Combine(CurrentDirectory.ToString(), Path.GetDirectoryName(in_path));
+
+            if (result?.EndsWith(':') == true)
+                result += '\\';
+
+            return result ?? in_path;
+        }
+
+        public bool FileExists(string in_path)
+        {
+            var response = _console.Client.SendCommand($"getfileattributes name=\"{GetNodeFromPath(in_path)}\"", false);
+
+            return response.Status.ToHResult() != EXeDbgStatusCode.XBDM_NOSUCHFILE;
+        }
+
         public static byte[] Download(XeDbgConsole in_console, string in_path)
         {
             var response = in_console.Client.SendCommand($"getfile name=\"{in_path}\"", false);
@@ -34,21 +56,6 @@ namespace XeSharp.Device.FileSystem
         public byte[] Download(string in_path)
         {
             return Download(_console, in_path);
-        }
-
-        public string ToAbsolutePath(string in_path)
-        {
-            if (string.IsNullOrEmpty(in_path))
-                return in_path;
-
-            var result = FormatHelper.IsAbsolutePath(in_path)
-                ? in_path
-                : Path.Combine(CurrentDirectory.ToString(), Path.GetDirectoryName(in_path));
-
-            if (result?.EndsWith(':') == true)
-                result += '\\';
-
-            return result ?? in_path;
         }
 
         public List<XeFileSystemDrive> GetDrives(bool in_isRecursiveNodes = true)
