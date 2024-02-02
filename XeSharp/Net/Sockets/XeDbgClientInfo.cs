@@ -2,7 +2,7 @@
 {
     public class XeDbgClientInfo
     {
-        public bool IsFreebootXBDM { get; private set; } = false;
+        public bool IsFreebootXBDM { get; private set; }
         public Version DebuggerVersion { get; private set; }
 
         public XeDbgClientInfo() { }

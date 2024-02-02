@@ -52,7 +52,7 @@ namespace XeSharp.Device
 
         public void Launch(string in_path, string in_args = "", EXeBootType in_bootType = EXeBootType.Title)
         {
-            var cmd = $"magicboot";
+            var cmd = "magicboot";
 
             if (in_bootType != EXeBootType.Title)
                 cmd += $" {in_bootType.ToString().ToLower()}";

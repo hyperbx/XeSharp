@@ -113,8 +113,8 @@ namespace XeSharp.Helpers
         public static byte[] HexStringToByteArray(string in_hexStr)
         {
             in_hexStr = in_hexStr.Replace("0x", "")
-                           .Replace(" ", "")
-                           .Replace("?", "");
+                                 .Replace(" ", "")
+                                 .Replace("?", "");
 
             return Enumerable.Range(0, in_hexStr.Length)
                              .Where(x => x % 2 == 0)
