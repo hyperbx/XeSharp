@@ -2,7 +2,7 @@
 
 namespace XeSharp.Helpers
 {
-    public class StringHelper
+    public static class StringHelper
     {
         public static string[] ParseArgs(string in_line, bool in_isTrimmedQuotes = true)
         {
@@ -14,6 +14,11 @@ namespace XeSharp.Helpers
                 args[i] = in_isTrimmedQuotes ? matches[i].Value.Trim('\"') : matches[i].Value;
 
             return args;
+        }
+
+        public static bool IsNullOrEmptyOrWhiteSpace(this string in_str)
+        {
+            return string.IsNullOrEmpty(in_str) || string.IsNullOrWhiteSpace(in_str);
         }
     }
 }

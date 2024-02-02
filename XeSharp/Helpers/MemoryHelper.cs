@@ -126,7 +126,7 @@ namespace XeSharp.Helpers
         {
             var @base = in_str.StartsWith("0x") || in_str.EndsWith('h') ? 16 : 10;
 
-            if (in_str.EndsWith('h'))
+            if (!in_type.Equals(typeof(string)) && in_str.EndsWith('h'))
                 in_str = in_str[..^1];
 
             if (in_type.Equals(typeof(sbyte)))
