@@ -13,6 +13,7 @@ namespace XeSharp.Device.FileSystem
         public virtual EXeFileSystemNodeType Type { get; set; } = EXeFileSystemNodeType.File;
         public virtual EXeFileSystemNodeAttribute Attributes { get; set; } = EXeFileSystemNodeAttribute.None;
 
+        public bool IsRoot { get; internal set; }
         public XeFileSystemDrive Drive { get; internal set; }
         public XeFileSystemNode Parent { get; internal set; }
         public IEnumerable<XeFileSystemNode> Nodes { get; set; } = [];
@@ -29,6 +30,7 @@ namespace XeSharp.Device.FileSystem
             DateModified = in_node.DateModified;
             Type = in_node.Type;
             Attributes = in_node.Attributes;
+            IsRoot = in_node.IsRoot;
             Drive = in_node.Drive;
             Parent = in_node.Parent;
             Nodes = in_node.Nodes;
@@ -39,6 +41,9 @@ namespace XeSharp.Device.FileSystem
             var ini = IniParser.DoInline(in_nodeCsv);
 
             Name = ini[""]["name"];
+
+            if (string.IsNullOrEmpty(Name))
+                throw new InvalidDataException("Node has no name.");
 
             Size = ((long)MemoryHelper.ChangeType<uint>(ini[""]["sizehi"]) << 32) |
                 MemoryHelper.ChangeType<uint>(ini[""]["sizelo"]);
@@ -85,7 +90,9 @@ namespace XeSharp.Device.FileSystem
             if (Type != EXeFileSystemNodeType.Directory)
                 throw new NotSupportedException("The node must be a directory.");
 
-            Nodes = in_console.FileSystem.GetNodesFromPath(ToString(), false, this);
+            Nodes = IsRoot
+                ? in_console.FileSystem.GetDrivesRoot(in_console.FileSystem.IsFlashMemoryMapped, false).Nodes
+                : in_console.FileSystem.GetNodesFromPath(ToString(), false, this);
 
             return this;
         }
