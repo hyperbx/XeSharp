@@ -66,6 +66,16 @@ namespace XeSharp.Device.FileSystem
             return this;
         }
 
+        public XeFileSystemNode Refresh(XeDbgConsole in_console)
+        {
+            if (Type != EXeFileSystemNodeType.Directory)
+                throw new NotSupportedException("The node must be a directory.");
+
+            Nodes = in_console.FileSystem.GetNodesFromPath(ToString(), false, this);
+
+            return this;
+        }
+
         public XeFileSystemDrive GetDrive()
         {
             var node = this;
