@@ -1,4 +1,5 @@
 ﻿using XeSharp.Helpers;
+using XeSharp.Net;
 using XeSharp.Serialisation.INI;
 
 namespace XeSharp.Device.FileSystem
@@ -58,6 +59,19 @@ namespace XeSharp.Device.FileSystem
 
             if (ini[""].ContainsKey("hidden"))
                 Attributes |= EXeFileSystemNodeAttribute.Hidden;
+        }
+
+        public XeDbgResponse Delete(XeDbgConsole in_console)
+        {
+            if (Type == EXeFileSystemNodeType.Directory)
+            {
+                Refresh(in_console);
+
+                foreach (var node in Nodes)
+                    node.Delete(in_console);
+            }
+
+            return XeFileSystem.Delete(in_console, ToString(), Type);
         }
 
         public XeFileSystemNode Download(XeDbgConsole in_console)

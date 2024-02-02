@@ -45,6 +45,23 @@ namespace XeSharp.Device.FileSystem
             return response.Status.ToHResult() != EXeDbgStatusCode.XBDM_NOSUCHFILE;
         }
 
+        public static XeDbgResponse Delete(XeDbgConsole in_console, string in_path, EXeFileSystemNodeType in_type = EXeFileSystemNodeType.File)
+        {
+            var cmd = $"delete name=\"{in_path}\"";
+
+            if (in_type == EXeFileSystemNodeType.Directory)
+                cmd += " dir";
+
+            return in_console.Client.SendCommand(cmd, false);
+        }
+
+        public XeDbgResponse Delete(string in_path)
+        {
+            var node = GetNodeFromPath(in_path);
+
+            return Delete(_console, node.ToString(), node.Type);
+        }
+
         public static byte[] Download(XeDbgConsole in_console, string in_path)
         {
             var response = in_console.Client.SendCommand($"getfile name=\"{in_path}\"", false);
