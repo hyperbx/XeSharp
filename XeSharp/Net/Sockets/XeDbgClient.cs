@@ -1,5 +1,6 @@
 ﻿using System.Net.Sockets;
 using System.Text;
+using XeSharp.Net.Events;
 
 namespace XeSharp.Net.Sockets
 {
@@ -8,6 +9,9 @@ namespace XeSharp.Net.Sockets
         internal TcpClient Client;
         internal StreamReader Reader;
         internal BinaryWriter Writer;
+
+        public event ClientReadEventHandler ReadEvent;
+        public event ClientWriteEventHandler WriteEvent;
 
         public XeDbgClientInfo Info { get; private set; }
 
@@ -48,6 +52,14 @@ namespace XeSharp.Net.Sockets
         {
             // FIXME: this doesn't always return false when the console is shut down.
             return Client != null && Client.Connected;
+        }
+
+        public string Pop()
+        {
+            if (!IsConnected())
+                return string.Empty;
+
+            return Reader.ReadLine();
         }
 
         public XeDbgResponse SendCommand(string in_command, bool in_isThrowExceptionOnServerError = true)
@@ -106,12 +118,42 @@ namespace XeSharp.Net.Sockets
             return buffer;
         }
 
-        public string Pop()
+        public void WriteBytes(byte[] in_data)
         {
-            if (!IsConnected())
-                return string.Empty;
+            WriteBytesAsync(in_data).GetAwaiter().GetResult();
+        }
 
-            return Reader.ReadLine();
+        public async Task WriteBytesAsync(byte[] in_data)
+        {
+            if (in_data.Length > int.MaxValue)
+                throw new InvalidDataException($"The input buffer is too large ({int.MaxValue:N0} bytes max).");
+
+            var bytesSent = 0;
+            var bytesTotal = in_data.Length;
+
+            while (bytesSent < bytesTotal)
+            {
+                int chunkSize = Math.Min(0x1000, bytesTotal - bytesSent);
+
+                byte[] chunk = new byte[chunkSize];
+                Buffer.BlockCopy(in_data, bytesSent, chunk, 0, chunkSize);
+
+                await Client.GetStream().WriteAsync(chunk);
+
+                bytesSent += chunkSize;
+
+                OnWrite(new ClientWriteEventArgs(bytesSent, bytesTotal));
+            }
+        }
+
+        protected virtual void OnRead(ClientReadEventArgs in_args)
+        {
+            ReadEvent?.Invoke(this, in_args);
+        }
+
+        protected virtual void OnWrite(ClientWriteEventArgs in_args)
+        {
+            WriteEvent?.Invoke(this, in_args);
         }
 
         public void Dispose()
