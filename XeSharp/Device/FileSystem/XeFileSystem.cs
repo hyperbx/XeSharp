@@ -56,6 +56,31 @@ namespace XeSharp.Device.FileSystem
         public byte[] Download(string in_path)
         {
             return Download(_console, in_path);
+        public void Upload(byte[] in_data, string in_destination, bool in_isOverwrite = true)
+        {
+            ArgumentException.ThrowIfNullOrEmpty(in_destination);
+
+            if (!in_isOverwrite && FileExists(in_destination))
+                throw new IOException("The destination file already exists.");
+
+            var response = _console.Client.SendCommand(
+                $"sendfile name=\"{Path.Combine(CurrentDirectory.ToString(), Path.GetFileName(in_destination))}\" length={in_data.Length}");
+
+            if (response.Status.ToHResult() != EXeDbgStatusCode.XBDM_READYFORBIN)
+                throw new IOException("An internal error occurred and the data could not be sent.");
+
+            _console.Client.WriteBytes(in_data);
+            _console.Client.Pop();
+        }
+
+        public void Upload(string in_source, string in_destination, bool in_isOverwrite = true)
+        {
+            ArgumentException.ThrowIfNullOrEmpty(in_source);
+
+            if (!File.Exists(in_source))
+                return;
+
+            Upload(File.ReadAllBytes(in_source), in_destination, in_isOverwrite);
         }
 
         public List<XeFileSystemDrive> GetDrives(bool in_isMapFlashMemory = true, bool in_isRecursiveNodes = true)
