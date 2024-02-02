@@ -112,7 +112,6 @@ namespace XeSharp.Device.FileSystem
             {
                 // Map flash memory in drive list.
                 _console.Client.SendCommand("drivemap internal");
-                IsFlashMemoryMapped = true;
             }
 
             var drives = _console.Client.SendCommand("drivelist", false)?.Results as string[];
