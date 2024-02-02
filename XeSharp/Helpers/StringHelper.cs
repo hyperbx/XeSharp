@@ -6,7 +6,7 @@ namespace XeSharp.Helpers
     {
         public static string[] ParseArgs(string in_line, bool in_isTrimmedQuotes = true)
         {
-            var pattern = @"(?:[^\s""]+|""(?:[^""]|"")*"")";
+            var pattern = @"(?:[^\s""]+|""(?:[^""]|"""")*"")";
             var matches = Regex.Matches(in_line, pattern);
             var args = new string[matches.Count];
 
