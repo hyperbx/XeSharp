@@ -38,7 +38,7 @@ namespace XeSharp.Device.FileSystem
             return result ?? in_path;
         }
 
-        public bool FileExists(string in_path)
+        public bool Exists(string in_path)
         {
             var response = _console.Client.SendCommand($"getfileattributes name=\"{GetNodeFromPath(in_path)}\"", false);
 
@@ -82,7 +82,7 @@ namespace XeSharp.Device.FileSystem
         {
             ArgumentException.ThrowIfNullOrEmpty(in_destination);
 
-            if (!in_isOverwrite && FileExists(in_destination))
+            if (!in_isOverwrite && Exists(in_destination))
                 throw new IOException("The destination file already exists.");
 
             var response = _console.Client.SendCommand(
