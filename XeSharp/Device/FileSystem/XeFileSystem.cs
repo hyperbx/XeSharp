@@ -150,7 +150,7 @@ namespace XeSharp.Device.FileSystem
             var result = new XeFileSystemNode()
             {
                 Type = EXeFileSystemNodeType.Directory,
-                Attributes = EXeFileSystemNodeAttribute.Readonly,
+                Attributes = EXeFileSystemNodeAttribute.ReadOnly,
                 IsRoot = true
             };
 

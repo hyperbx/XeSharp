@@ -1,9 +1,10 @@
 ﻿namespace XeSharp.Device.FileSystem
 {
+    [Flags]
     public enum EXeFileSystemNodeAttribute
     {
         None,
-        Readonly,
+        ReadOnly,
         Hidden
     }
 }

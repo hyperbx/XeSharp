@@ -5,7 +5,7 @@
         Title,
         Wait,
         Warm,
-        Cold = 4,
-        Stop = 8
+        Cold,
+        Stop
     }
 }

@@ -60,7 +60,7 @@ namespace XeSharp.Device.FileSystem
                 Type = EXeFileSystemNodeType.Directory;
 
             if (ini[""].ContainsKey("readonly"))
-                Attributes |= EXeFileSystemNodeAttribute.Readonly;
+                Attributes |= EXeFileSystemNodeAttribute.ReadOnly;
 
             if (ini[""].ContainsKey("hidden"))
                 Attributes |= EXeFileSystemNodeAttribute.Hidden;
