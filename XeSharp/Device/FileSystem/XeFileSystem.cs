@@ -55,7 +55,9 @@ namespace XeSharp.Device.FileSystem
 
         public byte[] Download(string in_path)
         {
-            return Download(_console, in_path);
+            return Download(_console, GetNodeFromPath(in_path).ToString());
+        }
+
         public void Upload(byte[] in_data, string in_destination, bool in_isOverwrite = true)
         {
             ArgumentException.ThrowIfNullOrEmpty(in_destination);
