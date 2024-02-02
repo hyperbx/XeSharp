@@ -1,4 +1,4 @@
-﻿namespace XeSharp.Device.Enums
+﻿namespace XeSharp.Device
 {
     public enum EXeBootType
     {

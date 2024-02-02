@@ -1,6 +1,4 @@
-﻿using System.IO;
-using System.Runtime.InteropServices;
-using XeSharp.Device.Enums;
+﻿using System.Runtime.InteropServices;
 using XeSharp.Device.FileSystem;
 using XeSharp.Device.Title;
 using XeSharp.Helpers;

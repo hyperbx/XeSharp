@@ -10,14 +10,17 @@ namespace XeSharp.Device.FileSystem
 
         public XeFileSystemNode CurrentDirectory { get; set; }
 
+        // TODO: check if FLASH:\ is mapped here, rather than in GetDrives().
+        public bool IsFlashMemoryMapped { get; private set; }
+
         public XeFileSystem() { }
 
-        public XeFileSystem(XeDbgConsole in_console, bool in_isFullFileSystemMap = true)
+        public XeFileSystem(XeDbgConsole in_console, bool in_isFullFileSystemMapped = true)
         {
             _console = in_console;
 
             // Initialise root node.
-            CurrentDirectory = GetDrivesRoot(in_isRecursiveNodes: in_isFullFileSystemMap);
+            CurrentDirectory = GetDrivesRoot(in_isRecursiveNodes: in_isFullFileSystemMapped);
         }
 
         public string ToAbsolutePath(string in_path)
@@ -85,14 +88,15 @@ namespace XeSharp.Device.FileSystem
             Upload(File.ReadAllBytes(in_source), in_destination, in_isOverwrite);
         }
 
-        public List<XeFileSystemDrive> GetDrives(bool in_isMapFlashMemory = true, bool in_isRecursiveNodes = true)
+        public List<XeFileSystemDrive> GetDrives(bool in_isFlashMemoryMapped = true, bool in_isRecursiveNodes = true)
         {
             var result = new List<XeFileSystemDrive>();
 
-            if (in_isMapFlashMemory)
+            if (in_isFlashMemoryMapped)
             {
                 // Map flash memory in drive list.
                 _console.Client.SendCommand("drivemap internal");
+                IsFlashMemoryMapped = true;
             }
 
             var drives = _console.Client.SendCommand("drivelist", false)?.Results as string[];
@@ -125,15 +129,16 @@ namespace XeSharp.Device.FileSystem
             return result;
         }
 
-        public XeFileSystemNode GetDrivesRoot(bool in_isMapFlashMemory = true, bool in_isRecursiveNodes = true)
+        public XeFileSystemNode GetDrivesRoot(bool in_isFlashMemoryMapped = true, bool in_isRecursiveNodes = true)
         {
             var result = new XeFileSystemNode()
             {
                 Type = EXeFileSystemNodeType.Directory,
-                Attributes = EXeFileSystemNodeAttribute.Readonly
+                Attributes = EXeFileSystemNodeAttribute.Readonly,
+                IsRoot = true
             };
 
-            var drives = GetDrives(in_isMapFlashMemory, in_isRecursiveNodes);
+            var drives = GetDrives(in_isFlashMemoryMapped, in_isRecursiveNodes);
 
             for (int i = 0; i < drives.Count; i++)
                 drives[i].Parent = result;
