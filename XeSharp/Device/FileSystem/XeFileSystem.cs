@@ -10,8 +10,7 @@ namespace XeSharp.Device.FileSystem
 
         public XeFileSystemNode CurrentDirectory { get; set; }
 
-        // TODO: check if FLASH:\ is mapped here, rather than in GetDrives().
-        public bool IsFlashMemoryMapped { get; private set; }
+        public bool IsFlashMemoryMapped => GetDrives(false, false).Any(x => x.Name == "FLASH:");
 
         public XeFileSystem() { }
 
