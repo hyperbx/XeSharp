@@ -61,15 +61,24 @@ namespace XeSharp.Device.FileSystem
             return Delete(_console, node.ToString(), node.Type);
         }
 
+        public static void Download(XeDbgConsole in_console, string in_path, Stream in_stream)
+        {
+            var response = in_console.Client.SendCommand($"getfile name=\"{in_path}\"", false);
+
+            if (response.Status.ToHResult() != EXeDbgStatusCode.XBDM_BINRESPONSE)
+                return;
+
+            in_console.Client.CopyTo(in_stream);
+        }
+
         public static byte[] Download(XeDbgConsole in_console, string in_path)
         {
             var response = in_console.Client.SendCommand($"getfile name=\"{in_path}\"", false);
 
-            // File does not exist.
-            if (response.Status.ToHResult() == EXeDbgStatusCode.XBDM_MEMUNMAPPED)
+            if (response.Status.ToHResult() != EXeDbgStatusCode.XBDM_BINRESPONSE)
                 return [];
 
-            return response?.Results.Cast<byte>().ToArray();
+            return in_console.Client.ReadBytes();
         }
 
         public byte[] Download(string in_path)
@@ -90,6 +99,7 @@ namespace XeSharp.Device.FileSystem
             if (response.Status.ToHResult() != EXeDbgStatusCode.XBDM_READYFORBIN)
                 throw new IOException("An internal error occurred and the data could not be sent.");
 
+            // TODO: stream?
             _console.Client.WriteBytes(in_data);
             _console.Client.Pop();
         }
@@ -174,7 +184,7 @@ namespace XeSharp.Device.FileSystem
 
             foreach (var nodeCsv in nodeCsvs)
             {
-                var node = new XeFileSystemNode(nodeCsv);
+                var node = new XeFileSystemNode(_console, nodeCsv);
 
                 if (in_parent != null)
                 {

@@ -28,7 +28,7 @@ namespace XeSharp.Net
 
         public XeDbgResponse(uint in_status, string in_message, object[] in_results = null) : this(new XeDbgStatusCode(in_status), in_message, in_results) { }
 
-        public static XeDbgResponse Parse(XeDbgClient in_client, bool in_isAssumeSuccessOnInvalidStatusCode = true)
+        public static XeDbgResponse Parse(XeDbgClient in_client, bool in_isAssumeSuccessOnInvalidStatusCode = false)
         {
             var buffer = in_client.Reader.ReadLine();
 
@@ -57,9 +57,11 @@ namespace XeSharp.Net
             var hResult = XeDbgStatusCode.ToHResult(status);
             var message = tokens[isStatusParsed ? 1 : 0].Trim();
 
-            // Handle binary response.
+            /* Handle binary response manually post-response.
+               We could read the data here straight into a buffer,
+               but we may run out of memory if not streamed somewhere. */
             if (hResult == EXeDbgStatusCode.XBDM_BINRESPONSE)
-                return new XeDbgResponse(status, message, in_client.ReadBytes().Cast<object>().ToArray());
+                return new XeDbgResponse(status, message);
 
             var isMultiResponse = hResult == EXeDbgStatusCode.XBDM_MULTIRESPONSE;
 

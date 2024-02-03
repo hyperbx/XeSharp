@@ -11,5 +11,10 @@
         {
             return in_hResult < 0;
         }
+
+        public static string GetUserDirectory()
+        {
+            return Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        }
     }
 }

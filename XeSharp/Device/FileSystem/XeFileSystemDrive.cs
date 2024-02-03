@@ -14,12 +14,14 @@ namespace XeSharp.Device.FileSystem
         {
             Name = in_name;
             Nodes = in_nodes;
-            FriendlyName = GetFriendlyName(in_console);
+            Console = in_console;
+            FriendlyName = GetFriendlyName();
         }
 
-        public string GetFriendlyName(XeDbgConsole in_console)
+        // FIXME: this isn't working for subdirectories of drives.
+        public string GetFriendlyName()
         {
-            var data = XeFileSystem.Download(in_console, $@"{Name}\name.txt");
+            var data = XeFileSystem.Download(Console, $@"{Name}\name.txt");
 
             if (data == null || data.Length <= 0)
                 return string.Empty;

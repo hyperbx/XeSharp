@@ -1,4 +1,5 @@
-﻿using System.Net.Sockets;
+﻿using System.Buffers;
+using System.Net.Sockets;
 using System.Text;
 using XeSharp.Net.Events;
 
@@ -6,14 +7,16 @@ namespace XeSharp.Net.Sockets
 {
     public class XeDbgClient : IDisposable
     {
-        internal TcpClient Client;
-        internal StreamReader Reader;
-        internal BinaryWriter Writer;
+        internal TcpClient Client { get; private set; }
+        internal StreamReader Reader { get; private set; }
+        internal BinaryWriter Writer { get; private set; }
+
+        public XeDbgClientInfo Info { get; private set; }
+
+        public XeDbgResponse Response { get; private set; }
 
         public event ClientReadEventHandler ReadEvent;
         public event ClientWriteEventHandler WriteEvent;
-
-        public XeDbgClientInfo Info { get; private set; }
 
         public string HostName { get; private set; } = "0.0.0.0";
 
@@ -85,38 +88,131 @@ namespace XeSharp.Net.Sockets
             if (response.Message?.Equals("bye", StringComparison.CurrentCultureIgnoreCase) ?? false)
                 Dispose();
 
-            return response;
+            return Response = response;
         }
+
+        #region Reading Methods
 
         public string[] ReadLines()
         {
+            return ReadLinesAsync().GetAwaiter().GetResult();
+        }
+
+        public async Task<string[]> ReadLinesAsync()
+        {
             var result = new List<string>();
+
+            var bytesRead = 0;
+            var isBegin = true;
 
             while (true)
             {
                 var line = Reader.ReadLine();
 
-                if (line == "." || XeDbgResponse.IsStatusMessage(line))
+                if (line == null || line == "." || XeDbgResponse.IsStatusMessage(line))
                     break;
 
                 result.Add(line);
+
+                bytesRead += line.Length;
+
+                OnRead(new ClientReadEventArgs(isBegin, bytesRead, 0));
+
+                isBegin = false;
             }
 
             return [.. result];
         }
 
+        private int ReadDataSize()
+        {
+            var buffer = new byte[4];
+
+            Client.GetStream().Read(buffer, 0, buffer.Length);
+
+            return BitConverter.ToInt32(buffer);
+        }
+
         public byte[] ReadBytes()
         {
-            var stream = Client.GetStream();
+            return ReadBytesAsync().GetAwaiter().GetResult();
+        }
 
-            byte[] sizeBuffer = new byte[4];
-            stream.Read(sizeBuffer, 0, sizeBuffer.Length);
+        public async Task<byte[]> ReadBytesAsync()
+        {
+            var bytesRead = 0;
+            var bytesTotal = ReadDataSize();
 
-            byte[] buffer = new byte[BitConverter.ToInt32(sizeBuffer)];
-            stream.Read(buffer, 0, buffer.Length);
+            if (bytesTotal <= 0)
+                return [];
+
+            var buffer = new byte[bytesTotal];
+            var isBegin = true;
+
+            while (bytesRead < bytesTotal)
+            {
+                var bufferSize = Math.Min(0x1000, bytesTotal - bytesRead);
+                var bufferRead = await Client.GetStream().ReadAsync(buffer, bytesRead, bufferSize);
+
+                if (bufferRead == 0)
+                    break;
+
+                bytesRead += bufferRead;
+
+                OnRead(new ClientReadEventArgs(isBegin, bytesRead, bytesTotal));
+
+                isBegin = false;
+            }
 
             return buffer;
         }
+
+        public void CopyTo(Stream in_destination, int in_bufferSize = 81920)
+        {
+            var bytesRead = 0;
+            var bytesTotal = ReadDataSize();
+
+            if (bytesTotal <= 0)
+                return;
+
+            // Allocate resizable buffer with preset size.
+            var buffer = ArrayPool<byte>.Shared.Rent(in_bufferSize);
+
+            try
+            {
+                var isBegin = true;
+
+                while (bytesRead < bytesTotal)
+                {
+                    var bufferSize = Math.Min(0x1000, bytesTotal - bytesRead);
+                    var bufferRead = Client.GetStream().Read(buffer, 0, bufferSize);
+
+                    if (bufferRead == 0)
+                        break;
+
+                    in_destination.Write(buffer, 0, bufferRead);
+
+                    bytesRead += bufferRead;
+
+                    OnRead(new ClientReadEventArgs(isBegin, bytesRead, bytesTotal));
+
+                    isBegin = false;
+                }
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(buffer);
+            }
+        }
+
+        protected virtual void OnRead(ClientReadEventArgs in_args)
+        {
+            ReadEvent?.Invoke(this, in_args);
+        }
+
+        #endregion // Reading Methods
+
+        #region Writing Methods
 
         public void WriteBytes(byte[] in_data)
         {
@@ -130,31 +226,31 @@ namespace XeSharp.Net.Sockets
 
             var bytesSent = 0;
             var bytesTotal = in_data.Length;
+            var isBegin = true;
 
             while (bytesSent < bytesTotal)
             {
-                int chunkSize = Math.Min(0x1000, bytesTotal - bytesSent);
+                var bufferSize = Math.Min(0x1000, bytesTotal - bytesSent);
+                var buffer = new byte[bufferSize];
 
-                byte[] chunk = new byte[chunkSize];
-                Buffer.BlockCopy(in_data, bytesSent, chunk, 0, chunkSize);
+                Buffer.BlockCopy(in_data, bytesSent, buffer, 0, bufferSize);
 
-                await Client.GetStream().WriteAsync(chunk);
+                await Client.GetStream().WriteAsync(buffer);
 
-                bytesSent += chunkSize;
+                bytesSent += bufferSize;
 
-                OnWrite(new ClientWriteEventArgs(bytesSent, bytesTotal));
+                OnWrite(new ClientWriteEventArgs(isBegin, bytesSent, bytesTotal));
+
+                isBegin = false;
             }
-        }
-
-        protected virtual void OnRead(ClientReadEventArgs in_args)
-        {
-            ReadEvent?.Invoke(this, in_args);
         }
 
         protected virtual void OnWrite(ClientWriteEventArgs in_args)
         {
             WriteEvent?.Invoke(this, in_args);
         }
+
+        #endregion // Writing Methods
 
         public void Dispose()
         {
