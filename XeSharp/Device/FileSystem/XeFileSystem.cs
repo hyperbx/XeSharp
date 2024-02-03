@@ -248,7 +248,8 @@ namespace XeSharp.Device.FileSystem
             {
                 Type = EXeFileSystemNodeType.Directory,
                 Attributes = EXeFileSystemNodeAttribute.ReadOnly,
-                IsRoot = true
+                IsRoot = true,
+                Console = _console
             };
 
             var drives = GetDrives(in_isFlashMemoryMapped, in_isRecursiveNodes);
