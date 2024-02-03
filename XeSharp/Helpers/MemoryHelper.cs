@@ -4,6 +4,11 @@ namespace XeSharp.Helpers
 {
     public static class MemoryHelper
     {
+        /// <summary>
+        /// Prints a byte array to the console.
+        /// </summary>
+        /// <param name="in_data">The byte array to print.</param>
+        /// <param name="in_baseAddr">The address to start the left-most column at.</param>
         public static void PrintBytes(byte[] in_data, uint in_baseAddr = 0)
         {
             var oldColour = Console.ForegroundColor;
@@ -67,6 +72,12 @@ namespace XeSharp.Helpers
             }
         }
 
+        /// <summary>
+        /// Transforms a byte array to a requested structure type.
+        /// </summary>
+        /// <typeparam name="T">The type to transform the byte array to.</typeparam>
+        /// <param name="in_data">The data to transform.</param>
+        /// <param name="in_isBigEndian">Determines whether the data is in big-endian format.</param>
         public static T ByteArrayToStructure<T>(byte[] in_data, bool in_isBigEndian = false) where T : struct
         {
             if (in_data == null || in_data.Length <= 0)
@@ -87,6 +98,12 @@ namespace XeSharp.Helpers
             }
         }
 
+        /// <summary>
+        /// Transforms a structure to a byte array.
+        /// </summary>
+        /// <typeparam name="T">The type to transform.</typeparam>
+        /// <param name="in_structure">The data to transform.</param>
+        /// <param name="in_isBigEndian">Determines whether the data is in big-endian format.</param>
         public static byte[] StructureToByteArray<T>(T in_structure, bool in_isBigEndian = true) where T : struct
         {
             byte[] data = new byte[Marshal.SizeOf(typeof(T))];
@@ -105,11 +122,19 @@ namespace XeSharp.Helpers
             return in_isBigEndian ? data.Reverse().ToArray() : data;
         }
 
-        public static string ByteArrayToHexString(byte[] in_bytes)
+        /// <summary>
+        /// Transforms a byte array into a string of hexadecimal bytes.
+        /// </summary>
+        /// <param name="in_data">The byte array to transform.</param>
+        public static string ByteArrayToHexString(byte[] in_data)
         {
-            return BitConverter.ToString(in_bytes).Replace("-", " ");
+            return BitConverter.ToString(in_data).Replace("-", " ");
         }
 
+        /// <summary>
+        /// Transforms a string of hexadecimal bytes into a byte array.
+        /// </summary>
+        /// <param name="in_hexStr">The string to transform.</param>
         public static byte[] HexStringToByteArray(string in_hexStr)
         {
             in_hexStr = in_hexStr.Replace("0x", "")
@@ -122,6 +147,11 @@ namespace XeSharp.Helpers
                              .ToArray();
         }
 
+        /// <summary>
+        /// Transforms a string to the requested type.
+        /// </summary>
+        /// <param name="in_str">The string containing data to transform.</param>
+        /// <param name="in_type">The type to transform to.</param>
         public static object ChangeType(string in_str, Type in_type)
         {
             var @base = in_str.StartsWith("0x") || in_str.EndsWith('h') ? 16 : 10;
@@ -151,6 +181,11 @@ namespace XeSharp.Helpers
             return Convert.ChangeType(in_str, in_type);
         }
 
+        /// <summary>
+        /// Transforms a string to the requested type.
+        /// </summary>
+        /// <typeparam name="T">The type to transform to.</typeparam>
+        /// <param name="in_str">The string containing data to transform.</param>
         public static T ChangeType<T>(string in_str)
         {
             return (T)ChangeType(in_str, typeof(T));

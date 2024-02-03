@@ -11,22 +11,39 @@ namespace XeSharp.Net.Sockets
         internal StreamReader Reader { get; private set; }
         internal BinaryWriter Writer { get; private set; }
 
+        /// <summary>
+        /// Information about this client.
+        /// </summary>
         public XeDbgClientInfo Info { get; private set; }
 
+        /// <summary>
+        /// The last response from this client.
+        /// </summary>
         public XeDbgResponse Response { get; private set; }
+
+        /// <summary>
+        /// The host name or IP address of the server this client is connected to.
+        /// </summary>
+        public string HostName { get; private set; } = "0.0.0.0";
 
         public event ClientReadEventHandler ReadEvent;
         public event ClientWriteEventHandler WriteEvent;
 
-        public string HostName { get; private set; } = "0.0.0.0";
-
         public XeDbgClient() { }
 
+        /// <summary>
+        /// Connects to a server via its host name or IP address.
+        /// </summary>
+        /// <param name="in_hostName">The host name or IP address of the server.</param>
         public XeDbgClient(string in_hostName)
         {
             Connect(in_hostName);
         }
 
+        /// <summary>
+        /// Connects to a server via its host name or IP address.
+        /// </summary>
+        /// <param name="in_hostName">The host name or IP address of the server.</param>
         public void Connect(string in_hostName)
         {
             // Console is already connected.
@@ -45,18 +62,27 @@ namespace XeSharp.Net.Sockets
             Info = new XeDbgClientInfo(this);
         }
 
+        /// <summary>
+        /// Disconnects from the server.
+        /// </summary>
         public void Disconnect()
         {
             SendCommand("bye");
             Dispose();
         }
 
+        /// <summary>
+        /// Determines whether the client is connected to the server.
+        /// </summary>
         public bool IsConnected()
         {
             // FIXME: this doesn't always return false when the console is shut down.
             return Client != null && Client.Connected;
         }
 
+        /// <summary>
+        /// Flushes the last response's message from the client stream.
+        /// </summary>
         public string Pop()
         {
             if (!IsConnected())
@@ -65,6 +91,11 @@ namespace XeSharp.Net.Sockets
             return Reader.ReadLine();
         }
 
+        /// <summary>
+        /// Sends a command to the server.
+        /// </summary>
+        /// <param name="in_command">The command to send.</param>
+        /// <param name="in_isThrowExceptionOnServerError">Determines whether an exception will be thrown if the client encounters an error response from the server.</param>
         public XeDbgResponse SendCommand(string in_command, bool in_isThrowExceptionOnServerError = true)
         {
             if (!IsConnected())
@@ -75,6 +106,10 @@ namespace XeSharp.Net.Sockets
             return GetResponse(in_isThrowExceptionOnServerError);
         }
 
+        /// <summary>
+        /// Gets the last response from the server.
+        /// </summary>
+        /// <param name="in_isThrowExceptionOnServerError">Determines whether an exception will be thrown if the client encounters an error response from the server.</param>
         public XeDbgResponse GetResponse(bool in_isThrowExceptionOnServerError = true)
         {
             if (!IsConnected())
@@ -93,11 +128,17 @@ namespace XeSharp.Net.Sockets
 
         #region Reading Methods
 
+        /// <summary>
+        /// Reads all lines from the client stream.
+        /// </summary>
         public string[] ReadLines()
         {
             return ReadLinesAsync().GetAwaiter().GetResult();
         }
 
+        /// <summary>
+        /// Reads all lines from the client stream asynchronously.
+        /// </summary>
         public async Task<string[]> ReadLinesAsync()
         {
             var result = new List<string>();
@@ -124,6 +165,10 @@ namespace XeSharp.Net.Sockets
             return [.. result];
         }
 
+        /// <summary>
+        /// Reads the 32-bit data size from the client stream.
+        /// <para>Used for reading data for binary responses.</para>
+        /// </summary>
         private int ReadDataSize()
         {
             var buffer = new byte[4];
@@ -133,11 +178,21 @@ namespace XeSharp.Net.Sockets
             return BitConverter.ToInt32(buffer);
         }
 
+        /// <summary>
+        /// Reads all bytes from the client stream.
+        /// <para>Used for reading data for binary responses.</para>
+        /// <para>Not recommended for large binary responses.</para>
+        /// </summary>
         public byte[] ReadBytes()
         {
             return ReadBytesAsync().GetAwaiter().GetResult();
         }
 
+        /// <summary>
+        /// Reads all bytes from the client stream asynchronously.
+        /// <para>Used for reading data for binary responses.</para>
+        /// <para>Not recommended for large binary responses.</para>
+        /// </summary>
         public async Task<byte[]> ReadBytesAsync()
         {
             var bytesRead = 0;
@@ -167,6 +222,13 @@ namespace XeSharp.Net.Sockets
             return buffer;
         }
 
+        /// <summary>
+        /// Streams all bytes from the client stream to a destination stream.
+        /// <para>Used for reading data for binary responses.</para>
+        /// <para>Recommended for large binary responses.</para>
+        /// </summary>
+        /// <param name="in_destination">The destination stream to write to.</param>
+        /// <param name="in_bufferSize">The size of the buffer to copy.</param>
         public void CopyTo(Stream in_destination, int in_bufferSize = 81920)
         {
             var bytesRead = 0;
@@ -214,15 +276,25 @@ namespace XeSharp.Net.Sockets
 
         #region Writing Methods
 
+        /// <summary>
+        /// Writes a buffer to the client stream.
+        /// <para>The client only supports a maximum buffer size of 4,294,967,295 bytes.</para>
+        /// </summary>
+        /// <param name="in_data">The buffer to write.</param>
         public void WriteBytes(byte[] in_data)
         {
             WriteBytesAsync(in_data).GetAwaiter().GetResult();
         }
 
+        /// <summary>
+        /// Writes a buffer to the client stream asynchronously.
+        /// <para>The client only supports a maximum buffer size of 4,294,967,295 bytes.</para>
+        /// </summary>
+        /// <param name="in_data">The buffer to write.</param>
         public async Task WriteBytesAsync(byte[] in_data)
         {
-            if (in_data.Length > int.MaxValue)
-                throw new InvalidDataException($"The input buffer is too large ({int.MaxValue:N0} bytes max).");
+            if (in_data.Length > uint.MaxValue)
+                throw new InvalidDataException($"The input buffer is too large ({uint.MaxValue:N0} bytes max).");
 
             var bytesSent = 0;
             var bytesTotal = in_data.Length;
@@ -252,6 +324,10 @@ namespace XeSharp.Net.Sockets
 
         #endregion // Writing Methods
 
+        /// <summary>
+        /// Disposes any associated members of this client.
+        /// <para>Use <see cref="Disconnect"/> to disconnect from the server.</para>
+        /// </summary>
         public void Dispose()
         {
             Client?.Close();

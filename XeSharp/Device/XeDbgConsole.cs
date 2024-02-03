@@ -11,22 +11,29 @@ namespace XeSharp.Device
     {
         private const int _maxCommandLength = 512;
 
-        public XeDbgClient Client { get; }
+        /// <summary>
+        /// The client connected to this console.
+        /// </summary>
+        public XeDbgClient Client { get; private set; }
+
+        /// <summary>
+        /// Information about this console.
+        /// </summary>
         public XeDbgConsoleInfo Info { get; private set; }
+
+        /// <summary>
+        /// This console's filesystem.
+        /// </summary>
         public XeFileSystem FileSystem { get; private set; }
 
         public XeDbgConsole() { }
 
-        public XeDbgConsole(string in_hostName, bool in_isClientOnly = false, bool in_isFullFileSystemMap = true)
-        {
-            Client = new XeDbgClient(in_hostName);
-
-            if (in_isClientOnly)
-                return;
-
-            FinaliseCtor(in_isFullFileSystemMap);
-        }
-
+        /// <summary>
+        /// Connects to a console via a pre-existing client.
+        /// </summary>
+        /// <param name="in_client">The client to connect to the console.</param>
+        /// <param name="in_isClientOnly">Determines whether only the client will be initialised.</param>
+        /// <param name="in_isFullFileSystemMap">Determines whether the full filesystem will be mapped.</param>
         public XeDbgConsole(XeDbgClient in_client, bool in_isClientOnly = false, bool in_isFullFileSystemMap = true)
         {
             Client = in_client;
@@ -34,20 +41,33 @@ namespace XeSharp.Device
             if (in_isClientOnly)
                 return;
 
-            FinaliseCtor(in_isFullFileSystemMap);
-        }
-
-        private void FinaliseCtor(bool in_isFullFileSystemMap)
-        {
             Info = new XeDbgConsoleInfo(this);
             FileSystem = new XeFileSystem(this, in_isFullFileSystemMap);
         }
 
+        /// <summary>
+        /// Connects to a console via its host name or IP address.
+        /// </summary>
+        /// <param name="in_hostName">The host name or IP address of the console.</param>
+        /// <param name="in_isClientOnly">Determines whether only the client will be initialised.</param>
+        /// <param name="in_isFullFileSystemMap">Determines whether the full filesystem will be mapped.</param>
+        public XeDbgConsole(string in_hostName, bool in_isClientOnly = false, bool in_isFullFileSystemMap = true)
+            : this(new XeDbgClient(in_hostName), in_isClientOnly, in_isFullFileSystemMap) { }
+
+        /// <summary>
+        /// Restarts the console.
+        /// </summary>
         public void Restart()
         {
             Client.SendCommand("magicboot cold");
         }
 
+        /// <summary>
+        /// Launches a remote executable binary.
+        /// </summary>
+        /// <param name="in_path">The path to the executable.</param>
+        /// <param name="in_args">The command line arguments to pass to the executable.</param>
+        /// <param name="in_bootType">Determines how this executable should be launched.</param>
         public void Launch(string in_path, string in_args = "", EXeBootType in_bootType = EXeBootType.Title)
         {
             var cmd = "magicboot";
@@ -64,11 +84,19 @@ namespace XeSharp.Device
             Client.SendCommand(cmd);
         }
 
+        /// <summary>
+        /// Ejects the DVD drive on the console.
+        /// </summary>
         public void Eject()
         {
             Client.SendCommand("dvdeject");
         }
 
+        /// <summary>
+        /// Reads a memory location into a buffer.
+        /// </summary>
+        /// <param name="in_addr">The virtual address to read from.</param>
+        /// <param name="in_length">The length of memory to read.</param>
         public byte[] ReadBytes(uint in_addr, int in_length)
         {
             var response = Client.SendCommand($"getmem addr={in_addr} length={in_length}");
@@ -76,6 +104,11 @@ namespace XeSharp.Device
             return MemoryHelper.HexStringToByteArray(string.Join(string.Empty, response.Results));
         }
 
+        /// <summary>
+        /// Reads a memory location into an unmanaged type.
+        /// </summary>
+        /// <typeparam name="T">The type to implicitly cast to.</typeparam>
+        /// <param name="in_addr">The virtual address to read from.</param>
         public T Read<T>(uint in_addr) where T : unmanaged
         {
             var data = ReadBytes(in_addr, Marshal.SizeOf(typeof(T)));
@@ -86,6 +119,11 @@ namespace XeSharp.Device
             return MemoryHelper.ByteArrayToStructure<T>(data.Reverse().ToArray());
         }
 
+        /// <summary>
+        /// Writes a buffer to a memory location.
+        /// </summary>
+        /// <param name="in_addr">The virtual address to write to.</param>
+        /// <param name="in_data">The buffer to write.</param>
         public XeDbgResponse WriteBytes(uint in_addr, byte[] in_data)
         {
             var cmd = $"setmem addr={in_addr} data=";
@@ -99,11 +137,20 @@ namespace XeSharp.Device
             return Client.SendCommand(cmd);
         }
 
+        /// <summary>
+        /// Writes an unmanaged type to a memory location.
+        /// </summary>
+        /// <typeparam name="T">The implicit type to write.</typeparam>
+        /// <param name="in_addr">The virtual address to write to.</param>
+        /// <param name="in_data">The data to write.</param>
         public XeDbgResponse Write<T>(uint in_addr, T in_data) where T : unmanaged
         {
             return WriteBytes(in_addr, MemoryHelper.StructureToByteArray(in_data));
         }
 
+        /// <summary>
+        /// Gets all modules.
+        /// </summary>
         public Dictionary<string, XeModuleInfo> GetModules()
         {
             var result = new Dictionary<string, XeModuleInfo>();
@@ -121,7 +168,10 @@ namespace XeSharp.Device
             return result;
         }
 
-        public XeModuleInfo GetMainModule()
+        /// <summary>
+        /// Gets the current foreground module.
+        /// </summary>
+        public XeModuleInfo GetForegroundModule()
         {
             var modules = GetModules();
 
@@ -131,6 +181,14 @@ namespace XeSharp.Device
             return modules.Last().Value;
         }
 
+        /// <summary>
+        /// Scans the current foreground module for a byte pattern.
+        /// </summary>
+        /// <param name="in_memory">The buffer to scan (downloads the current foreground module if null).</param>
+        /// <param name="in_pattern">The pattern to scan for.</param>
+        /// <param name="in_mask">The mask of the pattern ('x' for scannable bytes, '?' for any byte).</param>
+        /// <param name="in_moduleName">The name of the module to scan (used to get the address and size to scan).</param>
+        /// <param name="in_isFirstResult">Determines whether this function returns the first match it finds, rather than all matches.</param>
         public List<uint> ScanSignature(byte[] in_memory, byte[] in_pattern, string in_mask, string in_moduleName = "", bool in_isFirstResult = true)
         {
             var results = new List<uint>();
@@ -148,7 +206,7 @@ namespace XeSharp.Device
                 : modules[in_moduleName];
 
             /* TODO: this could (and probably should) be optimised to scan
-               in chunks, rather than downloading the entire binary. */
+                     in chunks, rather than downloading the entire binary. */
             var memory = in_memory ?? ReadBytes(module.BaseAddress, (int)module.ImageSize);
 
             for (uint i = 0; i < memory.Length; i++)
@@ -176,6 +234,13 @@ namespace XeSharp.Device
             return results;
         }
 
+        /// <summary>
+        /// Scans the current foreground module for a byte pattern.
+        /// </summary>
+        /// <param name="in_pattern">The pattern to scan for.</param>
+        /// <param name="in_mask">The mask of the pattern ('x' for scannable bytes, '?' for any byte).</param>
+        /// <param name="in_moduleName">The name of the module to scan (used to get the address and size to scan).</param>
+        /// <param name="in_isFirstResult">Determines whether this function returns the first match it finds, rather than all matches.</param>
         public List<uint> ScanSignature(byte[] in_pattern, string in_mask, string in_moduleName = "", bool in_isFirstResult = true)
         {
             return ScanSignature(null, in_pattern, in_mask, in_moduleName, in_isFirstResult);

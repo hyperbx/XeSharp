@@ -4,32 +4,56 @@ namespace XeSharp.Net
 {
     public class XeDbgStatusCode
     {
+        /// <summary>
+        /// The facility pertaining to the HRESULT codes.
+        /// </summary>
         public const int FACILITY_XBDM = 0x2DA;
 
+        /// <summary>
+        /// The raw status code.
+        /// </summary>
         public uint StatusCode { get; internal set; }
 
         public XeDbgStatusCode() { }
 
-        public XeDbgStatusCode(uint in_status)
+        /// <summary>
+        /// Creates a status code from a raw code.
+        /// </summary>
+        /// <param name="in_statusCode">The raw status code.</param>
+        public XeDbgStatusCode(uint in_statusCode)
         {
-            StatusCode = in_status;
+            StatusCode = in_statusCode;
         }
 
+        /// <summary>
+        /// Determines whether the HRESULT of this status code is successful.
+        /// </summary>
         public bool IsSucceeded()
         {
             return Win32Helper.IsHResultSuccess((int)ToHResult());
         }
 
+        /// <summary>
+        /// Determines whether the HRESULT of this status code has failed.
+        /// </summary>
         public bool IsFailed()
         {
             return Win32Helper.IsHResultFail((int)ToHResult());
         }
 
+        /// <summary>
+        /// Transforms this status code into a HRESULT.
+        /// </summary>
         public EXeDbgStatusCode ToHResult()
         {
             return ToHResult(StatusCode);
         }
 
+        /// <summary>
+        /// Transforms the input status code into a HRESULT.
+        /// </summary>
+        /// <param name="in_statusCode">The raw status code to transform.</param>
+        /// <returns></returns>
         public static EXeDbgStatusCode ToHResult(uint in_statusCode)
         {
             // TODO: please use maths.
@@ -38,6 +62,10 @@ namespace XeSharp.Net
             return (EXeDbgStatusCode)(((str[0] == '4' ? 1 : 0) << 31) | (FACILITY_XBDM << 16) | (int.Parse(str[^1].ToString())));
         }
 
+        /// <summary>
+        /// Transforms the input HRESULT into a status code.
+        /// </summary>
+        /// <param name="in_hResult">The HRESULT to transform.</param>
         public static uint ToStatusCode(EXeDbgStatusCode in_hResult)
         {
             var hResult = (uint)in_hResult;
@@ -69,7 +97,9 @@ namespace XeSharp.Net
             return $"HRESULT 0x{((uint)hResult):X8} ({hResult}): {Descriptions[hResult]}";
         }
 
-        // TODO: localise?
+        /// <summary>
+        /// The descriptions pertaining to each HRESULT.
+        /// </summary>
         public static Dictionary<EXeDbgStatusCode, string> Descriptions { get; } = new()
         {
             { EXeDbgStatusCode.XBDM_NOERR,                             "No error occurred." },

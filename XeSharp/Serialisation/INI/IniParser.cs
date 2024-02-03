@@ -5,6 +5,10 @@ namespace XeSharp.Serialisation.INI
 {
     public class IniParser
     {
+        /// <summary>
+        /// Parses INI data into a dictionary.
+        /// </summary>
+        /// <param name="in_ini">The lines to parse.</param>
         public static Dictionary<string, Dictionary<string, string>> DoLines(string[] in_ini)
         {
             Dictionary<string, Dictionary<string, string>> result = [];
@@ -59,6 +63,12 @@ namespace XeSharp.Serialisation.INI
             return result;
         }
 
+        /// <summary>
+        /// Parses INI data into a class using <see cref="IniPropertyAttribute"/> on its members.
+        /// </summary>
+        /// <typeparam name="T">The class type.</typeparam>
+        /// <param name="in_obj">The class using <see cref="IniPropertyAttribute"/> on its members.</param>
+        /// <param name="in_ini">The lines to parse.</param>
         public static void DoLines<T>(T in_obj, string[] in_ini)
         {
             var ini = DoLines(in_ini);
@@ -99,16 +109,30 @@ namespace XeSharp.Serialisation.INI
             return entries;
         }
 
+        /// <summary>
+        /// Parses INI data written on a single line using spaces instead of line breaks.
+        /// </summary>
+        /// <param name="in_line">The line to parse.</param>
         public static Dictionary<string, Dictionary<string, string>> DoInline(string in_line)
         {
             return DoLines(SplitInlineIni(in_line));
         }
 
+        /// <summary>
+        /// Parses INI data written on a single line using spaces instead of line breaks.
+        /// </summary>
+        /// <typeparam name="T">The class type.</typeparam>
+        /// <param name="in_obj">The class using <see cref="IniPropertyAttribute"/> on its members.</param>
+        /// <param name="in_line">The line to parse.</param>
         public static void DoInline<T>(T in_obj, string in_line)
         {
             DoLines(in_obj, SplitInlineIni(in_line));
         }
 
+        /// <summary>
+        /// Parses INI data from a file.
+        /// </summary>
+        /// <param name="in_path">The path to the *.ini file to parse.</param>
         public static Dictionary<string, Dictionary<string, string>> DoFile(string in_path)
         {
             if (!File.Exists(in_path))
@@ -117,6 +141,12 @@ namespace XeSharp.Serialisation.INI
             return DoLines(File.ReadAllLines(in_path));
         }
 
+        /// <summary>
+        /// Parses INI data from a file.
+        /// </summary>
+        /// <typeparam name="T">The class type.</typeparam>
+        /// <param name="in_obj">The class using <see cref="IniPropertyAttribute"/> on its members.</param>
+        /// <param name="in_path">The path to the *.ini file to parse.</param>
         public static void DoFile<T>(T in_obj, string in_path)
         {
             if (!File.Exists(in_path))

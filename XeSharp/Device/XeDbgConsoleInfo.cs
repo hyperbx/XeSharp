@@ -2,17 +2,60 @@
 {
     public class XeDbgConsoleInfo
     {
-        public string DebugName { get; set; }
-        public long ID { get; set; }
-        public bool IsExtendedRAM { get; set; }
-        public bool IsHDDInstalled { get; set; }
-        public EXeConsoleType Type { get; set; }
-        public EXeConsoleAppearance GuessedAppearance { get; set; }
-        public EXeConsolePlatform Platform { get; set; }
-        public EXeConsoleRevision Revision { get; set; }
-        public Version BaseKernelVersion { get; set; }
-        public Version KernelVersion { get; set; }
-        public Version XDKVersion { get; set; }
+        /// <summary>
+        /// The name of this console.
+        /// </summary>
+        public string DebugName { get; private set; }
+
+        /// <summary>
+        /// The unique identifier of this console.
+        /// </summary>
+        public long ID { get; private set; }
+
+        /// <summary>
+        /// Determines whether this console has 1.00 GB of memory, as opposed to the default 512 MB.
+        /// </summary>
+        public bool IsExtendedRAM { get; private set; }
+
+        /// <summary>
+        /// Determines whether this console has a HDD installed.
+        /// </summary>
+        public bool IsHDDInstalled { get; private set; }
+
+        /// <summary>
+        /// The type of unit this console is.
+        /// </summary>
+        public EXeConsoleType Type { get; private set; }
+
+        /// <summary>
+        /// The appearance of this console guessed by its type and memory capacity.
+        /// </summary>
+        public EXeConsoleAppearance GuessedAppearance { get; private set; }
+
+        /// <summary>
+        /// The platform of this console.
+        /// </summary>
+        public EXeConsolePlatform Platform { get; private set; }
+
+        /// <summary>
+        /// The motherboard revision used by this console.
+        /// </summary>
+        public EXeConsoleRevision Revision { get; private set; }
+
+        /// <summary>
+        /// The base kernel version used by this console.
+        /// </summary>
+        public Version BaseKernelVersion { get; private set; }
+
+        /// <summary>
+        /// The current kernel version used by this console.
+        /// </summary>
+        public Version KernelVersion { get; private set; }
+
+        /// <summary>
+        /// The current XDK version used by this console.
+        /// </summary>
+        public Version XDKVersion { get; private set; }
 
         public XeDbgConsoleInfo() { }
 

@@ -4,12 +4,21 @@ namespace XeSharp.Device.FileSystem
 {
     public class XeFileSystemDrive : XeFileSystemNode
     {
+        /// <summary>
+        /// The user-defined name of this drive.
+        /// </summary>
         public string FriendlyName { get; internal set; }
 
         public override EXeFileSystemNodeType Type => EXeFileSystemNodeType.Directory;
 
         public XeFileSystemDrive() { }
 
+        /// <summary>
+        /// Creates a new drive instance.
+        /// </summary>
+        /// <param name="in_console">The console this drive belongs to.</param>
+        /// <param name="in_name">The name of this drive.</param>
+        /// <param name="in_nodes">The nodes in this drive.</param>
         public XeFileSystemDrive(XeDbgConsole in_console, string in_name, List<XeFileSystemNode> in_nodes = null)
         {
             Name = in_name;
@@ -18,9 +27,12 @@ namespace XeSharp.Device.FileSystem
             FriendlyName = GetFriendlyName();
         }
 
-        // FIXME: this isn't working for subdirectories of drives.
+        /// <summary>
+        /// Gets the user-defined name of this drive.
+        /// </summary>
         public string GetFriendlyName()
         {
+            // FIXME: this isn't working for subdirectories of drives.
             var data = XeFileSystem.Download(Console, $@"{Name}\name.txt");
 
             if (data == null || data.Length <= 0)

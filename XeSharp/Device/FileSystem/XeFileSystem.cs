@@ -8,12 +8,23 @@ namespace XeSharp.Device.FileSystem
     {
         protected XeDbgConsole _console;
 
+        /// <summary>
+        /// The current navigated directory.
+        /// </summary>
         public XeFileSystemNode CurrentDirectory { get; set; }
 
+        /// <summary>
+        /// Determines whether flash memory is mapped as a drive.
+        /// </summary>
         public bool IsFlashMemoryMapped => GetDrives(false, false).Any(x => x.Name == "FLASH:");
 
         public XeFileSystem() { }
 
+        /// <summary>
+        /// Creates a new filesystem instance.
+        /// </summary>
+        /// <param name="in_console">The console to load the filesystem from.</param>
+        /// <param name="in_isFullFileSystemMapped">Determines whether the entire filesystem will be mapped in this instance.</param>
         public XeFileSystem(XeDbgConsole in_console, bool in_isFullFileSystemMapped = true)
         {
             _console = in_console;
@@ -22,6 +33,10 @@ namespace XeSharp.Device.FileSystem
             CurrentDirectory = GetDrivesRoot(in_isRecursiveNodes: in_isFullFileSystemMapped);
         }
 
+        /// <summary>
+        /// Transforms a relative path into an absolute path.
+        /// </summary>
+        /// <param name="in_path">The relative path to transform.</param>
         public string ToAbsolutePath(string in_path)
         {
             if (string.IsNullOrEmpty(in_path))
@@ -37,6 +52,10 @@ namespace XeSharp.Device.FileSystem
             return result ?? in_path;
         }
 
+        /// <summary>
+        /// Determines whether the specified file or directory exists.
+        /// </summary>
+        /// <param name="in_path">The path to check.</param>
         public bool Exists(string in_path)
         {
             var response = _console.Client.SendCommand($"getfileattributes name=\"{GetNodeFromPath(in_path)}\"", false);
@@ -44,6 +63,12 @@ namespace XeSharp.Device.FileSystem
             return response.Status.ToHResult() != EXeDbgStatusCode.XBDM_NOSUCHFILE;
         }
 
+        /// <summary>
+        /// Deletes a remote file or directory.
+        /// </summary>
+        /// <param name="in_console">The console containing the file or directory.</param>
+        /// <param name="in_path">The path to the file or directory to delete.</param>
+        /// <param name="in_type">The type of node to delete.</param>
         public static XeDbgResponse Delete(XeDbgConsole in_console, string in_path, EXeFileSystemNodeType in_type = EXeFileSystemNodeType.File)
         {
             var cmd = $"delete name=\"{in_path}\"";
@@ -54,6 +79,10 @@ namespace XeSharp.Device.FileSystem
             return in_console.Client.SendCommand(cmd, false);
         }
 
+        /// <summary>
+        /// Deletes a remote file or directory.
+        /// </summary>
+        /// <param name="in_path">The path to the file or directory to delete.</param>
         public XeDbgResponse Delete(string in_path)
         {
             var node = GetNodeFromPath(in_path);
@@ -61,6 +90,12 @@ namespace XeSharp.Device.FileSystem
             return Delete(_console, node.ToString(), node.Type);
         }
 
+        /// <summary>
+        /// Downloads the contents of a file into the input stream.
+        /// </summary>
+        /// <param name="in_console">The console containing the file.</param>
+        /// <param name="in_path">The path to the file to download.</param>
+        /// <param name="in_stream">The stream to write the file's data to.</param>
         public static void Download(XeDbgConsole in_console, string in_path, Stream in_stream)
         {
             var response = in_console.Client.SendCommand($"getfile name=\"{in_path}\"", false);
@@ -71,6 +106,12 @@ namespace XeSharp.Device.FileSystem
             in_console.Client.CopyTo(in_stream);
         }
 
+        /// <summary>
+        /// Downloads the contents of a file into a buffer.
+        /// <para>Not recommended for large files.</para>
+        /// </summary>
+        /// <param name="in_console">The console containing the file.</param>
+        /// <param name="in_path">The path to the file to download.</param>
         public static byte[] Download(XeDbgConsole in_console, string in_path)
         {
             var response = in_console.Client.SendCommand($"getfile name=\"{in_path}\"", false);
@@ -81,11 +122,22 @@ namespace XeSharp.Device.FileSystem
             return in_console.Client.ReadBytes();
         }
 
+        /// <summary>
+        /// Downloads the contents of a file into a buffer.
+        /// <para>Not recommended for large files.</para>
+        /// </summary>
+        /// <param name="in_path">The path to the file to download.</param>
         public byte[] Download(string in_path)
         {
             return Download(_console, GetNodeFromPath(in_path).ToString());
         }
 
+        /// <summary>
+        /// Uploads data to a file on the console.
+        /// </summary>
+        /// <param name="in_data">The data to write.</param>
+        /// <param name="in_destination">The remote path to write to.</param>
+        /// <param name="in_isOverwrite">Determines whether the remote file can be overwritten if it already exists.</param>
         public void Upload(byte[] in_data, string in_destination, bool in_isOverwrite = true)
         {
             ArgumentException.ThrowIfNullOrEmpty(in_destination);
@@ -104,6 +156,12 @@ namespace XeSharp.Device.FileSystem
             _console.Client.Pop();
         }
 
+        /// <summary>
+        /// Uploads a local file to the console.
+        /// </summary>
+        /// <param name="in_source">The local file to upload.</param>
+        /// <param name="in_destination">The remote path to write to.</param>
+        /// <param name="in_isOverwrite">Determines whether the remote file can be overwritten if it already exists.</param>
         public void Upload(string in_source, string in_destination, bool in_isOverwrite = true)
         {
             ArgumentException.ThrowIfNullOrEmpty(in_source);
@@ -114,6 +172,31 @@ namespace XeSharp.Device.FileSystem
             Upload(File.ReadAllBytes(in_source), in_destination, in_isOverwrite);
         }
 
+        /// <summary>
+        /// Copies a remote file to a remote destination.
+        /// </summary>
+        /// <param name="in_source">The remote path to copy from.</param>
+        /// <param name="in_destination">The remote path to copy to.</param>
+        /// <param name="in_isOverwrite">Determines whether the remote file can be overwritten if it already exists.</param>
+        public void Copy(string in_source, string in_destination, bool in_isOverwrite = true)
+        {
+            ArgumentException.ThrowIfNullOrEmpty(in_source);
+            ArgumentException.ThrowIfNullOrEmpty(in_destination);
+
+            if (!Exists(in_source))
+                throw new FileNotFoundException(in_source);
+
+            if (!in_isOverwrite && Exists(in_destination))
+                throw new IOException("The destination file already exists.");
+
+            // TODO
+        }
+
+        /// <summary>
+        /// Gets all logical drives on the console.
+        /// </summary>
+        /// <param name="in_isFlashMemoryMapped">Determines whether flash memory will be mapped in the list (only applies once per session).</param>
+        /// <param name="in_isRecursiveNodes">Determines whether all nodes in each drive will be loaded.</param>
         public List<XeFileSystemDrive> GetDrives(bool in_isFlashMemoryMapped = true, bool in_isRecursiveNodes = true)
         {
             var result = new List<XeFileSystemDrive>();
@@ -154,6 +237,11 @@ namespace XeSharp.Device.FileSystem
             return result;
         }
 
+        /// <summary>
+        /// Gets all logical drives on the console in a root node.
+        /// </summary>
+        /// <param name="in_isFlashMemoryMapped">Determines whether flash memory will be mapped in the list (only applies once per session).</param>
+        /// <param name="in_isRecursiveNodes">Determines whether all nodes in each drive will be loaded.</param>
         public XeFileSystemNode GetDrivesRoot(bool in_isFlashMemoryMapped = true, bool in_isRecursiveNodes = true)
         {
             var result = new XeFileSystemNode()
@@ -173,6 +261,12 @@ namespace XeSharp.Device.FileSystem
             return result;
         }
 
+        /// <summary>
+        /// Gets all nodes from the input path.
+        /// </summary>
+        /// <param name="in_path">The path to retrieve nodes from.</param>
+        /// <param name="in_isRecursiveNodes">Determines whether all subnodes in each node will be loaded.</param>
+        /// <param name="in_parent">The parent to attach to these nodes.</param>
         public List<XeFileSystemNode> GetNodesFromPath(string in_path, bool in_isRecursiveNodes = true, XeFileSystemNode in_parent = null)
         {
             var result = new List<XeFileSystemNode>();
@@ -204,6 +298,10 @@ namespace XeSharp.Device.FileSystem
             return result;
         }
 
+        /// <summary>
+        /// Gets a node from the input path.
+        /// </summary>
+        /// <param name="in_path">The expected path for the node.</param>
         public XeFileSystemNode GetNodeFromPath(string in_path)
         {
             if (string.IsNullOrEmpty(in_path))
@@ -225,6 +323,11 @@ namespace XeSharp.Device.FileSystem
             return null;
         }
 
+        /// <summary>
+        /// Gets a directory node from the input path.
+        /// </summary>
+        /// <param name="in_path">The expected path for the directory node.</param>
+        /// <param name="in_node">The directory node to search in.</param>
         public XeFileSystemNode GetDirectoryFromPath(string in_path, XeFileSystemNode in_node = null)
         {
             if (string.IsNullOrEmpty(in_path))
@@ -284,6 +387,10 @@ namespace XeSharp.Device.FileSystem
             return dir;
         }
 
+        /// <summary>
+        /// Changes the current directory to the input path.
+        /// </summary>
+        /// <param name="in_path">The path to change to.</param>
         public XeFileSystemNode ChangeDirectory(string in_path)
         {
             return CurrentDirectory = GetDirectoryFromPath(in_path);

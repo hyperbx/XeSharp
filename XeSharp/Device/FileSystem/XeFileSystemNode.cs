@@ -6,23 +6,73 @@ namespace XeSharp.Device.FileSystem
 {
     public class XeFileSystemNode
     {
+        /// <summary>
+        /// The name of this node.
+        /// </summary>
         public string Name { get; set; }
+
+        /// <summary>
+        /// The size (in bytes) of this node.
+        /// </summary>
         public long Size { get; set; }
+
+        /// <summary>
+        /// The date and time this node was created.
+        /// </summary>
         public DateTime DateCreated { get; set; } = new DateTime(1601, 1, 1);
+
+        /// <summary>
+        /// The date and time this node was last modified.
+        /// </summary>
         public DateTime DateModified { get; set; } = new DateTime(1601, 1, 1);
+
+        /// <summary>
+        /// The type this node is.
+        /// </summary>
         public virtual EXeFileSystemNodeType Type { get; set; } = EXeFileSystemNodeType.File;
+
+        /// <summary>
+        /// The attributes pertaining to this node.
+        /// </summary>
         public virtual EXeFileSystemNodeAttribute Attributes { get; set; } = EXeFileSystemNodeAttribute.None;
 
+        /// <summary>
+        /// Determines whether this node is the root directory.
+        /// <para>Used for the root node from <see cref="XeFileSystem.GetDrivesRoot(bool, bool)"/>.</para>
+        /// </summary>
         public bool IsRoot { get; internal set; }
+
+        /// <summary>
+        /// The console pertaining to this node.
+        /// </summary>
         public XeDbgConsole Console { get; internal set; }
+
+        /// <summary>
+        /// The drive pertaining to this node.
+        /// </summary>
         public XeFileSystemDrive Drive { get; internal set; }
+
+        /// <summary>
+        /// The parent containing this node.
+        /// </summary>
         public XeFileSystemNode Parent { get; internal set; }
+
+        /// <summary>
+        /// The subnodes pertaining to this node (if it is a directory).
+        /// </summary>
         public IEnumerable<XeFileSystemNode> Nodes { get; set; } = [];
 
+        /// <summary>
+        /// The binary data pertaining to this node.
+        /// </summary>
         public byte[] Data { get; internal set; }
 
         public XeFileSystemNode() { }
 
+        /// <summary>
+        /// Clones a node.
+        /// </summary>
+        /// <param name="in_node">The node to clone.</param>
         public XeFileSystemNode(XeFileSystemNode in_node)
         {
             Name = in_node.Name;
@@ -38,6 +88,11 @@ namespace XeSharp.Device.FileSystem
             Nodes = in_node.Nodes;
         }
 
+        /// <summary>
+        /// Creates a new node from space-separated values.
+        /// </summary>
+        /// <param name="in_console">The console pertaining to this node.</param>
+        /// <param name="in_nodeCsv">The space-separated values for information about this node.</param>
         public XeFileSystemNode(XeDbgConsole in_console, string in_nodeCsv)
         {
             var ini = IniParser.DoInline(in_nodeCsv);
@@ -70,6 +125,9 @@ namespace XeSharp.Device.FileSystem
             Console = in_console;
         }
 
+        /// <summary>
+        /// Deletes this node.
+        /// </summary>
         public XeDbgResponse Delete()
         {
             if (Type == EXeFileSystemNodeType.Directory)
@@ -83,17 +141,31 @@ namespace XeSharp.Device.FileSystem
             return XeFileSystem.Delete(Console, ToString(), Type);
         }
 
+        /// <summary>
+        /// Downloads the contents of this node into the <see cref="Data"/> buffer.
+        /// <para>Not recommended for large files.</para>
+        /// </summary>
         public XeFileSystemNode Download()
         {
             Data = XeFileSystem.Download(Console, ToString());
             return this;
         }
 
+        /// <summary>
+        /// Downloads the contents of this node into the input stream.
+        /// <para>Recommended for large files.</para>
+        /// </summary>
+        /// <param name="in_stream">The stream to write this node's data to.</param>
         public void Download(Stream in_stream)
         {
             XeFileSystem.Download(Console, ToString(), in_stream);
         }
 
+        /// <summary>
+        /// Downloads the contents of this node to a local path.
+        /// </summary>
+        /// <param name="in_destination">The path to download to.</param>
+        /// <param name="in_isOverwrite">Determines whether local files can be overwritten if they already exist.</param>
         public void Download(string in_destination, bool in_isOverwrite = true)
         {
             if (!FormatHelper.IsAbsolutePath(in_destination))
@@ -139,10 +211,13 @@ namespace XeSharp.Device.FileSystem
             DownloadRecursive(this, Type == EXeFileSystemNodeType.File ? 0 : 1);
         }
 
+        /// <summary>
+        /// Refreshes the contents of this node (if it is a directory).
+        /// </summary>
         public XeFileSystemNode Refresh()
         {
             if (Type != EXeFileSystemNodeType.Directory)
-                throw new NotSupportedException("The node must be a directory.");
+                return this;
 
             Nodes = IsRoot
                 ? Console.FileSystem.GetDrivesRoot(Console.FileSystem.IsFlashMemoryMapped, false).Nodes
@@ -151,6 +226,10 @@ namespace XeSharp.Device.FileSystem
             return this;
         }
 
+        /// <summary>
+        /// Sets the attributes of a local file or directory to match this node's attributes.
+        /// </summary>
+        /// <param name="in_path">The path to set attributes to.</param>
         public void SetLocalAttributes(string in_path)
         {
             switch (Type)
@@ -190,6 +269,9 @@ namespace XeSharp.Device.FileSystem
             }
         }
 
+        /// <summary>
+        /// Gets the drive this node belongs to.
+        /// </summary>
         public XeFileSystemDrive GetDrive()
         {
             var node = this;
@@ -205,6 +287,9 @@ namespace XeSharp.Device.FileSystem
             return null;
         }
 
+        /// <summary>
+        /// Gets the root directory from this node.
+        /// </summary>
         public XeFileSystemNode GetRoot()
         {
             var node = this;
@@ -215,12 +300,17 @@ namespace XeSharp.Device.FileSystem
             return node;
         }
 
+        /// <summary>
+        /// Gets the total number of nodes from this directory.
+        /// </summary>
+        /// <param name="in_isRecursiveNodes">Determines whether all subnodes from this directory will be accumulated in the total.</param>
+        /// <param name="in_isFoldersIncluded">Determines whether folders are included in the total number of nodes.</param>
         public long GetTotalNodes(bool in_isRecursiveNodes = false, bool in_isFoldersIncluded = true)
         {
             var result = 0L;
 
             if (Type != EXeFileSystemNodeType.Directory)
-                return 0;
+                return result;
 
             result += in_isFoldersIncluded
                 ? Nodes.Count()
@@ -240,6 +330,11 @@ namespace XeSharp.Device.FileSystem
             return result;
         }
 
+        /// <summary>
+        /// Gets the total size (in bytes) of all file nodes from this directory.
+        /// <para>This returns <see cref="Size"/> if this node is a file.</para>
+        /// </summary>
+        /// <param name="in_isRecursiveNodes">Determines whether all subnodes from this directory will be accumulated in the total.</param>
         public long GetTotalDataSize(bool in_isRecursiveNodes = false)
         {
             var result = 0L;
@@ -264,6 +359,10 @@ namespace XeSharp.Device.FileSystem
             return result;
         }
 
+        /// <summary>
+        /// Gets the relative path to this node after the drive name.
+        /// </summary>
+        /// <param name="in_depth">The depth of the path relative to the end.</param>
         public string GetRelativePath(int in_depth = -1)
         {
             var result = new List<string>();
@@ -285,6 +384,9 @@ namespace XeSharp.Device.FileSystem
             return string.Join('\\', result);
         }
 
+        /// <summary>
+        /// Gets friendly information about this node.
+        /// </summary>
         public string GetInfo()
         {
             var dataSize = GetTotalDataSize();

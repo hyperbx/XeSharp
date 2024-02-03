@@ -4,12 +4,27 @@ namespace XeSharp.Net
 {
     public class XeDbgResponse
     {
+        /// <summary>
+        /// The status code received by this response.
+        /// </summary>
         public XeDbgStatusCode Status { get; private set; } = new XeDbgStatusCode(400);
+
+        /// <summary>
+        /// The message received by this response.
+        /// </summary>
         public string Message { get; private set; }
+
+        /// <summary>
+        /// The data received by this response.
+        /// </summary>
         public object[] Results { get; private set; }
 
         public XeDbgResponse() { }
 
+        /// <summary>
+        /// Creates a response from the client.
+        /// </summary>
+        /// <param name="in_client">The client to get the response from.</param>
         public XeDbgResponse(XeDbgClient in_client)
         {
             var response = Parse(in_client);
@@ -19,6 +34,12 @@ namespace XeSharp.Net
             Results = response.Results;
         }
 
+        /// <summary>
+        /// Creates a response.
+        /// </summary>
+        /// <param name="in_status">The status code of the response.</param>
+        /// <param name="in_message">The message of the response.</param>
+        /// <param name="in_results">The data of the response.</param>
         public XeDbgResponse(XeDbgStatusCode in_status, string in_message, object[] in_results = null)
         {
             Status = in_status;
@@ -26,8 +47,20 @@ namespace XeSharp.Net
             Results = in_results;
         }
 
-        public XeDbgResponse(uint in_status, string in_message, object[] in_results = null) : this(new XeDbgStatusCode(in_status), in_message, in_results) { }
+        /// <summary>
+        /// Creates a response.
+        /// </summary>
+        /// <param name="in_status">The raw status code of the response.</param>
+        /// <param name="in_message">The message of the response.</param>
+        /// <param name="in_results">The data of the response.</param>
+        public XeDbgResponse(uint in_status, string in_message, object[] in_results = null)
+            : this(new XeDbgStatusCode(in_status), in_message, in_results) { }
 
+        /// <summary>
+        /// Parses the response from the client stream.
+        /// </summary>
+        /// <param name="in_client">The client to parse the response from.</param>
+        /// <param name="in_isAssumeSuccessOnInvalidStatusCode">Determines whether the response will be assumed successful if the status code cannot be parsed from the client stream.</param>
         public static XeDbgResponse Parse(XeDbgClient in_client, bool in_isAssumeSuccessOnInvalidStatusCode = false)
         {
             var buffer = in_client.Reader.ReadLine();
@@ -79,6 +112,11 @@ namespace XeSharp.Net
             return new XeDbgResponse(status, message);
         }
 
+        /// <summary>
+        /// Parses the response from the client stream.
+        /// </summary>
+        /// <param name="in_client">The client to parse the response from.</param>
+        /// <param name="out_response">The response parsed from the client stream.</param>
         public static bool TryParse(XeDbgClient in_client, out XeDbgResponse out_response)
         {
             try
@@ -93,6 +131,10 @@ namespace XeSharp.Net
             }
         }
 
+        /// <summary>
+        /// Determines whether the input string pertains to a status message.
+        /// </summary>
+        /// <param name="in_str">The string to check.</param>
         public static bool IsStatusMessage(string in_str)
         {
             if (string.IsNullOrEmpty(in_str) || in_str.Length <= 0 || in_str.Length < 3)
