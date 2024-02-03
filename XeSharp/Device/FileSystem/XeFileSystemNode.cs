@@ -97,7 +97,7 @@ namespace XeSharp.Device.FileSystem
         public void Download(string in_destination, bool in_isOverwrite = true)
         {
             if (!FormatHelper.IsAbsolutePath(in_destination))
-                in_destination = Path.Combine(Win32Helper.GetUserDirectory(), "Downloads", in_destination);
+                in_destination = Path.Combine(Win32Helper.GetUserDirectory(), "Downloads");
 
             if (!in_isOverwrite && File.Exists(in_destination))
                 throw new IOException("The destination file already exists.");
@@ -136,7 +136,7 @@ namespace XeSharp.Device.FileSystem
                 }
             }
 
-            DownloadRecursive(this);
+            DownloadRecursive(this, Type == EXeFileSystemNodeType.File ? 0 : 1);
         }
 
         public XeFileSystemNode Refresh()
