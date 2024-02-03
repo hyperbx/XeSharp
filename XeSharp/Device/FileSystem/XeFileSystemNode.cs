@@ -312,6 +312,8 @@ namespace XeSharp.Device.FileSystem
             if (Type != EXeFileSystemNodeType.Directory)
                 return result;
 
+            Refresh();
+
             result += in_isFoldersIncluded
                 ? Nodes.Count()
                 : Nodes.Count(x => x.Type == EXeFileSystemNodeType.File);
