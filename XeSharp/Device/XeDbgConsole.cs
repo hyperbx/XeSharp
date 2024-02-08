@@ -245,5 +245,10 @@ namespace XeSharp.Device
         {
             return ScanSignature(null, in_pattern, in_mask, in_moduleName, in_isFirstResult);
         }
+
+        public override string ToString()
+        {
+            return (Info?.DebugName ?? "Xbox 360") + $" @ \"{Client.HostName}\"";
+        }
     }
 }

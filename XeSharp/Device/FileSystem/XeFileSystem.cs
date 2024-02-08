@@ -149,7 +149,7 @@ namespace XeSharp.Device.FileSystem
                 throw new IOException("The destination file already exists.");
 
             var response = _console.Client.SendCommand(
-                $"sendfile name=\"{Path.Combine(CurrentDirectory.ToString(), Path.GetFileName(in_destination))}\" length={in_data.Length}");
+                $"sendfile name=\"{ToAbsolutePath(in_destination)}\" length={in_data.Length}");
 
             if (response.Status.ToHResult() != EXeDbgStatusCode.XBDM_READYFORBIN)
                 throw new IOException("An internal error occurred and the data could not be sent.");

@@ -1,6 +1,7 @@
 ﻿using System.Buffers;
 using System.Net.Sockets;
 using System.Text;
+using XeSharp.Helpers;
 using XeSharp.Net.Events;
 
 namespace XeSharp.Net.Sockets
@@ -32,9 +33,14 @@ namespace XeSharp.Net.Sockets
         public bool IsConnected => Client != null && Client.Connected;
 
         /// <summary>
-        /// The cancellation token for interrupting operations.
+        /// The cancellation token source for interrupting operations.
         /// </summary>
-        public CancellationToken CancellationToken { get; set; }
+        public CancellationTokenSource CancellationTokenSource { get; set; } = new();
+
+        /// <summary>
+        /// Determines whether the current operation has been cancelled.
+        /// </summary>
+        public bool IsCancelled => CancellationTokenSource.IsCancellationRequested;
 
         public event ClientReadEventHandler ReadEvent;
         public event ClientWriteEventHandler WriteEvent;
@@ -54,10 +60,11 @@ namespace XeSharp.Net.Sockets
         /// Connects to a server via its host name or IP address.
         /// </summary>
         /// <param name="in_hostName">The host name or IP address of the server.</param>
-        public void Connect(string in_hostName)
+        /// <param name="in_isChecked">Determines if the client checks if it's already connected to the server.</param>
+        public void Connect(string in_hostName, bool in_isChecked = true)
         {
             // Console is already connected.
-            if (in_hostName == HostName && IsConnected)
+            if (in_isChecked && in_hostName == HostName && IsConnected)
                 return;
 
             HostName = in_hostName;
@@ -66,10 +73,11 @@ namespace XeSharp.Net.Sockets
             Reader = new StreamReader(Client.GetStream());
             Writer = new BinaryWriter(Client.GetStream());
 
-            // Flush connected message.
+            ResetCancel();
             Pop();
 
             Info = new XeDbgClientInfo(this);
+            Response = null;
         }
 
         /// <summary>
@@ -82,6 +90,42 @@ namespace XeSharp.Net.Sockets
         }
 
         /// <summary>
+        /// Reconnects to the server.
+        /// <para>Only use this if absolutely necessary.</para>
+        /// </summary>
+        public void Reconnect()
+        {
+            Dispose();
+            Connect(HostName, false);
+        }
+
+        /// <summary>
+        /// Flushes the client stream.
+        /// </summary>
+        public void Flush()
+        {
+            /* This exists merely to hide the fact
+               that we're reconnecting... lol */
+            Reconnect();
+        }
+
+        /// <summary>
+        /// Cancels the current operation and resets the cancellation token source.
+        /// </summary>
+        public void Cancel()
+        {
+            CancellationTokenSource.Cancel();
+        }
+
+        /// <summary>
+        /// Resets the cancellation token source.
+        /// </summary>
+        public void ResetCancel()
+        {
+            CancellationTokenSource = new();
+        }
+
+        /// <summary>
         /// Pings the server.
         /// </summary>
         /// <param name="in_timeout">The time (in milliseconds) to wait for a response.</param>
@@ -89,12 +133,12 @@ namespace XeSharp.Net.Sockets
         {
             try
             {
-                CancellationToken = new CancellationTokenSource(in_timeout).Token;
+                CancellationTokenSource = new(in_timeout);
 
                 var task = Task.Run(() => SendCommand("dbgname", false));
 
                 // Wait for response.
-                task.Wait(CancellationToken);
+                task.Wait(CancellationTokenSource.Token);
 
                 if (task.Status != TaskStatus.RanToCompletion)
                     return false;
@@ -109,8 +153,7 @@ namespace XeSharp.Net.Sockets
                 return false;
             }
 
-            // Reset token for future operations.
-            CancellationToken = new CancellationToken();
+            ResetCancel();
 
             return true;
         }
@@ -167,16 +210,10 @@ namespace XeSharp.Net.Sockets
         {
             var result = string.Empty;
 
-            try
-            {
-                result = Reader.ReadLineAsync(CancellationToken).GetAwaiter().GetResult();
-            }
-            catch (OperationCanceledException)
-            {
-                return result;
-            }
+            ExceptionHelper.OperationCancelledHandler(
+                () => result = Reader.ReadLineAsync(CancellationTokenSource.Token).GetAwaiter().GetResult());
 
-            return result;
+            return result ?? string.Empty;
         }
 
         /// <summary>
@@ -197,11 +234,11 @@ namespace XeSharp.Net.Sockets
             var bytesRead = 0;
             var isBegin = true;
 
-            while (true)
+            while (!IsCancelled)
             {
                 var line = ReadLine();
 
-                if (line == null || line == "." || XeDbgResponse.IsStatusMessage(line))
+                if (string.IsNullOrEmpty(line) || line == "." || XeDbgResponse.IsStatusMessage(line))
                     break;
 
                 result.Add(line);
@@ -212,6 +249,9 @@ namespace XeSharp.Net.Sockets
 
                 isBegin = false;
             }
+
+            if (IsCancelled)
+                throw new OperationCanceledException();
 
             return [.. result];
         }
@@ -255,7 +295,7 @@ namespace XeSharp.Net.Sockets
             var buffer = new byte[bytesTotal];
             var isBegin = true;
 
-            while (bytesRead < bytesTotal)
+            while (bytesRead < bytesTotal && !IsCancelled)
             {
                 var bufferSize = Math.Min(0x1000, bytesTotal - bytesRead);
                 var bufferRead = await Client.GetStream().ReadAsync(buffer, bytesRead, bufferSize);
@@ -269,6 +309,9 @@ namespace XeSharp.Net.Sockets
 
                 isBegin = false;
             }
+
+            if (IsCancelled)
+                throw new OperationCanceledException();
 
             return buffer;
         }
@@ -295,7 +338,7 @@ namespace XeSharp.Net.Sockets
             {
                 var isBegin = true;
 
-                while (bytesRead < bytesTotal)
+                while (bytesRead < bytesTotal && !IsCancelled)
                 {
                     var bufferSize = Math.Min(0x1000, bytesTotal - bytesRead);
                     var bufferRead = Client.GetStream().Read(buffer, 0, bufferSize);
@@ -316,6 +359,9 @@ namespace XeSharp.Net.Sockets
             {
                 ArrayPool<byte>.Shared.Return(buffer);
             }
+
+            if (IsCancelled)
+                throw new OperationCanceledException();
         }
 
         protected virtual void OnRead(ClientReadEventArgs in_args)
@@ -330,6 +376,7 @@ namespace XeSharp.Net.Sockets
         /// <summary>
         /// Writes a buffer to the client stream.
         /// <para>The client only supports a maximum buffer size of 4,294,967,295 bytes.</para>
+        /// <para>This operation cannot be cancelled.</para>
         /// </summary>
         /// <param name="in_data">The buffer to write.</param>
         public void WriteBytes(byte[] in_data)
@@ -340,6 +387,7 @@ namespace XeSharp.Net.Sockets
         /// <summary>
         /// Writes a buffer to the client stream asynchronously.
         /// <para>The client only supports a maximum buffer size of 4,294,967,295 bytes.</para>
+        /// <para>This operation cannot be cancelled.</para>
         /// </summary>
         /// <param name="in_data">The buffer to write.</param>
         public async Task WriteBytesAsync(byte[] in_data)

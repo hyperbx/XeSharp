@@ -208,7 +208,9 @@ namespace XeSharp.Device.FileSystem
                 }
             }
 
-            DownloadRecursive(this, Type == EXeFileSystemNodeType.File ? 0 : 1);
+            ExceptionHelper.OperationCancelledHandler(
+                () => DownloadRecursive(this),
+                () => Console.Client.Flush());
         }
 
         /// <summary>
