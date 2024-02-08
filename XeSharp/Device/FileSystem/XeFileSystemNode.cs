@@ -14,7 +14,7 @@ namespace XeSharp.Device.FileSystem
         /// <summary>
         /// The size (in bytes) of this node.
         /// </summary>
-        public long Size { get; set; }
+        public ulong Size { get; set; }
 
         /// <summary>
         /// The date and time this node was created.
@@ -102,7 +102,7 @@ namespace XeSharp.Device.FileSystem
             if (string.IsNullOrEmpty(Name))
                 throw new InvalidDataException("Node has no name.");
 
-            Size = ((long)MemoryHelper.ChangeType<uint>(ini[""]["sizehi"]) << 32) |
+            Size = ((ulong)MemoryHelper.ChangeType<uint>(ini[""]["sizehi"]) << 32) |
                 MemoryHelper.ChangeType<uint>(ini[""]["sizelo"]);
 
             DateCreated = FormatHelper.FromFileTime(
@@ -356,9 +356,9 @@ namespace XeSharp.Device.FileSystem
         /// <para>This returns <see cref="Size"/> if this node is a file.</para>
         /// </summary>
         /// <param name="in_isRecursiveNodes">Determines whether all subnodes from this directory will be accumulated in the total.</param>
-        public long GetTotalDataSize(bool in_isRecursiveNodes = false)
+        public ulong GetTotalDataSize(bool in_isRecursiveNodes = false)
         {
-            var result = 0L;
+            var result = 0UL;
 
             result += Size;
 

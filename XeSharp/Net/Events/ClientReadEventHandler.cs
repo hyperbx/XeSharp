@@ -2,7 +2,7 @@
 
 namespace XeSharp.Net.Events
 {
-    public class ClientReadEventArgs(bool in_isBegin, int in_bytesRead, int in_bytesTotal) : EventArgs
+    public class ClientReadEventArgs(bool in_isBegin, uint in_bytesRead, uint in_bytesTotal) : EventArgs
     {
         /// <summary>
         /// Determines whether this event has just begun.
@@ -12,12 +12,12 @@ namespace XeSharp.Net.Events
         /// <summary>
         /// The amount of bytes read.
         /// </summary>
-        public int BytesRead { get; } = in_bytesRead;
+        public uint BytesRead { get; } = in_bytesRead;
 
         /// <summary>
         /// The total amount of bytes to read.
         /// </summary>
-        public int BytesTotal { get; } = in_bytesTotal;
+        public uint BytesTotal { get; } = in_bytesTotal;
 
         /// <summary>
         /// A formatted representation of the amount of bytes read.

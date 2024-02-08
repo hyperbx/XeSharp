@@ -1,4 +1,6 @@
-﻿namespace XeSharp.Helpers
+﻿using static System.Runtime.InteropServices.JavaScript.JSType;
+
+namespace XeSharp.Helpers
 {
     public class FormatHelper
     {
@@ -73,22 +75,33 @@
         }
 
         /// <summary>
-        /// Creates a readable string from length of bytes.
+        /// Gets a readable unit from a length of bytes.
         /// </summary>
         /// <param name="in_length">The length of bytes.</param>
-        public static string ByteLengthToDecimalString(long in_length)
+        public static (double Readable, string Unit) ByteLengthToDecimalUnits(ulong in_length)
         {
             string[] suffixes = ["B", "KB", "MB", "GB", "TB", "PB", "EB"];
             double readable = in_length;
 
             int i = 0;
-            while (readable >= 1024 && i < suffixes.Length - 1)
+            while (readable >= 1000 && i < suffixes.Length - 1)
             {
-                readable /= 1024;
+                readable /= 1000;
                 i++;
             }
 
-            return $"{readable:0} {suffixes[i]}";
+            return (readable, suffixes[i]);
+        }
+
+        /// <summary>
+        /// Creates a readable string from a length of bytes.
+        /// </summary>
+        /// <param name="in_length">The length of bytes.</param>
+        public static string ByteLengthToDecimalString(ulong in_length)
+        {
+            var (readable, unit) = ByteLengthToDecimalUnits(in_length);
+
+            return $"{readable:0} {unit}";
         }
 
         /// <summary>

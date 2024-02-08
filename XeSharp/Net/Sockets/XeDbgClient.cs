@@ -231,7 +231,7 @@ namespace XeSharp.Net.Sockets
         {
             var result = new List<string>();
 
-            var bytesRead = 0;
+            var bytesRead = 0U;
             var isBegin = true;
 
             while (!IsCancelled)
@@ -243,7 +243,7 @@ namespace XeSharp.Net.Sockets
 
                 result.Add(line);
 
-                bytesRead += line.Length;
+                bytesRead += (uint)line.Length;
 
                 OnRead(new ClientReadEventArgs(isBegin, bytesRead, 0));
 
@@ -260,13 +260,13 @@ namespace XeSharp.Net.Sockets
         /// Reads the 32-bit data size from the client stream.
         /// <para>Used for reading data for binary responses.</para>
         /// </summary>
-        private int ReadDataSize()
+        private uint ReadDataSize()
         {
             var buffer = new byte[4];
 
             Client.GetStream().Read(buffer, 0, buffer.Length);
 
-            return BitConverter.ToInt32(buffer);
+            return BitConverter.ToUInt32(buffer);
         }
 
         /// <summary>
@@ -286,7 +286,7 @@ namespace XeSharp.Net.Sockets
         /// </summary>
         public async Task<byte[]> ReadBytesAsync()
         {
-            var bytesRead = 0;
+            var bytesRead = 0U;
             var bytesTotal = ReadDataSize();
 
             if (bytesTotal <= 0)
@@ -298,12 +298,12 @@ namespace XeSharp.Net.Sockets
             while (bytesRead < bytesTotal && !IsCancelled)
             {
                 var bufferSize = Math.Min(0x1000, bytesTotal - bytesRead);
-                var bufferRead = await Client.GetStream().ReadAsync(buffer, bytesRead, bufferSize);
+                var bufferRead = await Client.GetStream().ReadAsync(buffer, (int)bytesRead, (int)bufferSize);
 
                 if (bufferRead == 0)
                     break;
 
-                bytesRead += bufferRead;
+                bytesRead += (uint)bufferRead;
 
                 OnRead(new ClientReadEventArgs(isBegin, bytesRead, bytesTotal));
 
@@ -325,7 +325,7 @@ namespace XeSharp.Net.Sockets
         /// <param name="in_bufferSize">The size of the buffer to copy.</param>
         public void CopyTo(Stream in_destination, int in_bufferSize = 81920)
         {
-            var bytesRead = 0;
+            var bytesRead = 0U;
             var bytesTotal = ReadDataSize();
 
             if (bytesTotal <= 0)
@@ -341,14 +341,14 @@ namespace XeSharp.Net.Sockets
                 while (bytesRead < bytesTotal && !IsCancelled)
                 {
                     var bufferSize = Math.Min(0x1000, bytesTotal - bytesRead);
-                    var bufferRead = Client.GetStream().Read(buffer, 0, bufferSize);
+                    var bufferRead = Client.GetStream().Read(buffer, 0, (int)bufferSize);
 
                     if (bufferRead == 0)
                         break;
 
                     in_destination.Write(buffer, 0, bufferRead);
 
-                    bytesRead += bufferRead;
+                    bytesRead += (uint)bufferRead;
 
                     OnRead(new ClientReadEventArgs(isBegin, bytesRead, bytesTotal));
 
@@ -395,8 +395,8 @@ namespace XeSharp.Net.Sockets
             if (in_data.Length > uint.MaxValue)
                 throw new InvalidDataException($"The input buffer is too large ({uint.MaxValue:N0} bytes max).");
 
-            var bytesSent = 0;
-            var bytesTotal = in_data.Length;
+            var bytesSent = 0U;
+            var bytesTotal = (uint)in_data.Length;
             var isBegin = true;
 
             while (bytesSent < bytesTotal)
@@ -404,7 +404,7 @@ namespace XeSharp.Net.Sockets
                 var bufferSize = Math.Min(0x1000, bytesTotal - bytesSent);
                 var buffer = new byte[bufferSize];
 
-                Buffer.BlockCopy(in_data, bytesSent, buffer, 0, bufferSize);
+                Buffer.BlockCopy(in_data, (int)bytesSent, buffer, 0, (int)bufferSize);
 
                 await Client.GetStream().WriteAsync(buffer);
 
