@@ -7,7 +7,7 @@ namespace XeSharp.Net
         /// <summary>
         /// The facility pertaining to the HRESULT codes.
         /// </summary>
-        public const int FACILITY_XBDM = 0x2DA;
+        public const int Facility = 0x2DA;
 
         /// <summary>
         /// The raw status code.
@@ -59,7 +59,7 @@ namespace XeSharp.Net
             // TODO: please use maths.
             var str = in_statusCode.ToString();
 
-            return (EXeDbgStatusCode)(((str[0] == '4' ? 1 : 0) << 31) | (FACILITY_XBDM << 16) | (int.Parse(str[^1].ToString())));
+            return (EXeDbgStatusCode)(((str[0] == '4' ? 1 : 0) << 31) | (Facility << 16) | (int.Parse(str[^1].ToString())));
         }
 
         /// <summary>
@@ -70,7 +70,7 @@ namespace XeSharp.Net
         {
             var hResult = (uint)in_hResult;
 
-            if ((hResult >> 16 & 0xFFFF) != FACILITY_XBDM)
+            if ((hResult >> 16 & 0xFFFF) != Facility)
             {
                 // HRESULT is from an unknown facility.
                 hResult = unchecked(Win32Helper.IsHResultSuccess((int)hResult)
