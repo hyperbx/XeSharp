@@ -63,7 +63,7 @@ namespace XeSharp.Net
         /// <param name="in_isAssumeSuccessOnInvalidStatusCode">Determines whether the response will be assumed successful if the status code cannot be parsed from the client stream.</param>
         public static XeDbgResponse Parse(XeDbgClient in_client, bool in_isAssumeSuccessOnInvalidStatusCode = false)
         {
-            var buffer = in_client.Reader.ReadLine();
+            var buffer = in_client.ReadLine();
 
             if (string.IsNullOrEmpty(buffer))
                 return new XeDbgResponse();

@@ -26,6 +26,16 @@ namespace XeSharp.Net.Sockets
         /// </summary>
         public string HostName { get; private set; } = "0.0.0.0";
 
+        /// <summary>
+        /// Determines whether the client is connected to the server.
+        /// </summary>
+        public bool IsConnected => Client != null && Client.Connected;
+
+        /// <summary>
+        /// The cancellation token for interrupting operations.
+        /// </summary>
+        public CancellationToken CancellationToken { get; set; }
+
         public event ClientReadEventHandler ReadEvent;
         public event ClientWriteEventHandler WriteEvent;
 
@@ -47,7 +57,7 @@ namespace XeSharp.Net.Sockets
         public void Connect(string in_hostName)
         {
             // Console is already connected.
-            if (in_hostName == HostName && IsConnected())
+            if (in_hostName == HostName && IsConnected)
                 return;
 
             HostName = in_hostName;
@@ -72,12 +82,37 @@ namespace XeSharp.Net.Sockets
         }
 
         /// <summary>
-        /// Determines whether the client is connected to the server.
+        /// Pings the server.
         /// </summary>
-        public bool IsConnected()
+        /// <param name="in_timeout">The time (in milliseconds) to wait for a response.</param>
+        public bool Ping(int in_timeout = 1000)
         {
-            // FIXME: this doesn't always return false when the console is shut down.
-            return Client != null && Client.Connected;
+            try
+            {
+                CancellationToken = new CancellationTokenSource(in_timeout).Token;
+
+                var task = Task.Run(() => SendCommand("dbgname", false));
+
+                // Wait for response.
+                task.Wait(CancellationToken);
+
+                if (task.Status != TaskStatus.RanToCompletion)
+                    return false;
+
+                var response = task.Result;
+
+                if (response?.Status?.ToHResult() != EXeDbgStatusCode.XBDM_NOERR)
+                    return false;
+            }
+            catch
+            {
+                return false;
+            }
+
+            // Reset token for future operations.
+            CancellationToken = new CancellationToken();
+
+            return true;
         }
 
         /// <summary>
@@ -85,10 +120,10 @@ namespace XeSharp.Net.Sockets
         /// </summary>
         public string Pop()
         {
-            if (!IsConnected())
+            if (!IsConnected)
                 return string.Empty;
 
-            return Reader.ReadLine();
+            return ReadLine();
         }
 
         /// <summary>
@@ -98,7 +133,7 @@ namespace XeSharp.Net.Sockets
         /// <param name="in_isThrowExceptionOnServerError">Determines whether an exception will be thrown if the client encounters an error response from the server.</param>
         public XeDbgResponse SendCommand(string in_command, bool in_isThrowExceptionOnServerError = true)
         {
-            if (!IsConnected())
+            if (!IsConnected)
                 return null;
 
             Writer?.Write(Encoding.ASCII.GetBytes($"{in_command}\r\n"));
@@ -112,7 +147,7 @@ namespace XeSharp.Net.Sockets
         /// <param name="in_isThrowExceptionOnServerError">Determines whether an exception will be thrown if the client encounters an error response from the server.</param>
         public XeDbgResponse GetResponse(bool in_isThrowExceptionOnServerError = true)
         {
-            if (!IsConnected())
+            if (!IsConnected)
                 return null;
 
             var response = new XeDbgResponse(this);
@@ -127,6 +162,22 @@ namespace XeSharp.Net.Sockets
         }
 
         #region Reading Methods
+
+        public string ReadLine()
+        {
+            var result = string.Empty;
+
+            try
+            {
+                result = Reader.ReadLineAsync(CancellationToken).GetAwaiter().GetResult();
+            }
+            catch (OperationCanceledException)
+            {
+                return result;
+            }
+
+            return result;
+        }
 
         /// <summary>
         /// Reads all lines from the client stream.
@@ -148,7 +199,7 @@ namespace XeSharp.Net.Sockets
 
             while (true)
             {
-                var line = Reader.ReadLine();
+                var line = ReadLine();
 
                 if (line == null || line == "." || XeDbgResponse.IsStatusMessage(line))
                     break;
