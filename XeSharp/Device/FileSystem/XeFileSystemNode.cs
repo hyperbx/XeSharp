@@ -326,12 +326,29 @@ namespace XeSharp.Device.FileSystem
                     continue;
 
                 if (in_isRecursiveNodes)
+                {
                     node.Refresh();
-
-                result += node.GetTotalNodes(in_isRecursiveNodes, in_isFoldersIncluded);
+                    result += node.GetTotalNodes(in_isRecursiveNodes, in_isFoldersIncluded);
+                }
             }
 
             return result;
+        }
+
+        /// <summary>
+        /// Gets the total number of file nodes from this directory.
+        /// </summary>
+        public long GetTotalFiles()
+        {
+            return Nodes.Count(x => x.Type == EXeFileSystemNodeType.File);
+        }
+
+        /// <summary>
+        /// Gets the total number of directory nodes from this directory.
+        /// </summary>
+        public long GetTotalDirectories()
+        {
+            return Nodes.Count(x => x.Type == EXeFileSystemNodeType.Directory);
         }
 
         /// <summary>
@@ -350,9 +367,10 @@ namespace XeSharp.Device.FileSystem
                 if (node.Type == EXeFileSystemNodeType.Directory)
                 {
                     if (in_isRecursiveNodes)
+                    {
                         node.Refresh();
-
-                    result += node.GetTotalDataSize(in_isRecursiveNodes);
+                        result += node.GetTotalDataSize(in_isRecursiveNodes);
+                    }
 
                     continue;
                 }
@@ -391,19 +409,22 @@ namespace XeSharp.Device.FileSystem
         /// <summary>
         /// Gets friendly information about this node.
         /// </summary>
-        public string GetInfo()
+        public string GetInfo(bool in_isRecursiveNodes = false)
         {
-            var dataSize = GetTotalDataSize();
+            var dataSize = GetTotalDataSize(in_isRecursiveNodes);
 
-            var info = $"Name ---------- : {Name ?? "Unknown"}\n" +
-                       $"Size ---------- : {FormatHelper.ByteLengthToDecimalString(dataSize)} ({dataSize:N0} bytes)\n" +
-                       $"Date Created -- : {DateCreated:dd/MM/yyyy hh:mm tt}\n" +
-                       $"Date Modified - : {DateModified:dd/MM/yyyy hh:mm tt}\n" +
-                       $"Type ---------- : {Type}\n" +
-                       $"Attributes ---- : {Attributes}";
+            var info = $"Name ────────── : {Name ?? "Unknown"}\n" +
+                       $"Size ────────── : {FormatHelper.ByteLengthToDecimalString(dataSize)} ({dataSize:N0} bytes)\n" +
+                       $"Date Created ── : {DateCreated:dd/MM/yyyy hh:mm tt}\n" +
+                       $"Date Modified ─ : {DateModified:dd/MM/yyyy hh:mm tt}\n" +
+                       $"Type ────────── : {Type}\n" +
+                       $"Attributes ──── : {Attributes}";
 
             if (Type == EXeFileSystemNodeType.Directory)
-                info += $"\nNodes --------- : {GetTotalNodes()}";
+            {
+                info += $"\nFiles ───────── : {GetTotalFiles()}";
+                info += $"\nDirectories ─── : {GetTotalDirectories()}";
+            }
 
             return info;
         }

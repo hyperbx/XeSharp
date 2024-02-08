@@ -133,17 +133,17 @@
 
         public override string ToString()
         {
-            return $"Name ---------------- : {DebugName}\n" +
-                   $"ID ------------------ : {ID} (0x{ID:X16})\n" +
-                   $"RAM ----------------- : {(IsExtendedRAM ? "1.00 GB" : "512 MB")}\n" +
-                   $"HDD ----------------- : {(IsHDDInstalled ? "Yes" : "No")}\n" +
-                   $"Type ---------------- : {Type}\n" +
-                   $"Guessed Appearance -- : {GuessedAppearance}\n" +
-                   $"Platform ------------ : {Platform}\n" +
-                   $"Revision ------------ : {Revision}\n" +
-                   $"Base Kernel Version - : {BaseKernelVersion}\n" +
-                   $"Kernel Version ------ : {KernelVersion}\n" +
-                   $"XDK Version --------- : {XDKVersion}";
+            return $"Name ──────────────── : {DebugName}\n" +
+                   $"ID ────────────────── : {ID} (0x{ID:X16})\n" +
+                   $"RAM ───────────────── : {(IsExtendedRAM ? "1.00 GB" : "512 MB")}\n" +
+                   $"HDD ───────────────── : {(IsHDDInstalled ? "Yes" : "No")}\n" +
+                   $"Type ──────────────── : {Type}\n" +
+                   $"Guessed Appearance ── : {GuessedAppearance}\n" +
+                   $"Platform ──────────── : {Platform}\n" +
+                   $"Revision ──────────── : {Revision}\n" +
+                   $"Base Kernel Version ─ : {BaseKernelVersion}\n" +
+                   $"Kernel Version ────── : {KernelVersion}\n" +
+                   $"XDK Version ───────── : {XDKVersion}";
         }
     }
 }
