@@ -110,7 +110,7 @@ namespace XeSharp.Net.Sockets
         }
 
         /// <summary>
-        /// Cancels the current operation and resets the cancellation token source.
+        /// Cancels the current operation.
         /// </summary>
         public void Cancel()
         {
