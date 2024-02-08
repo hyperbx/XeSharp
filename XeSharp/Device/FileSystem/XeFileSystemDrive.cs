@@ -1,4 +1,6 @@
 ﻿using System.Text;
+using XeSharp.Helpers;
+using XeSharp.Serialisation.INI;
 
 namespace XeSharp.Device.FileSystem
 {
@@ -8,6 +10,21 @@ namespace XeSharp.Device.FileSystem
         /// The user-defined name of this drive.
         /// </summary>
         public string FriendlyName { get; internal set; }
+
+        /// <summary>
+        /// The total bytes free for this drive.
+        /// </summary>
+        public ulong FreeSpace { get; internal set; }
+
+        /// <summary>
+        /// The total bytes used for this drive.
+        /// </summary>
+        public ulong UsedSpace => Capacity - FreeSpace;
+
+        /// <summary>
+        /// The capacity of this drive.
+        /// </summary>
+        public ulong Capacity { get; internal set; }
 
         public override EXeFileSystemNodeType Type => EXeFileSystemNodeType.Directory;
 
@@ -25,6 +42,23 @@ namespace XeSharp.Device.FileSystem
             Nodes = in_nodes;
             Console = in_console;
             FriendlyName = GetFriendlyName();
+
+            Parse((string)in_console.Client.SendCommand($"drivefreespace name=\"{ToString()}\"").Results[0]);
+        }
+
+        /// <summary>
+        /// Parses drive capacity information.
+        /// </summary>
+        /// <param name="in_driveCsv">The space-separated values for information about this drive's capacity.</param>
+        public void Parse(string in_driveCsv)
+        {
+            var ini = IniParser.DoInline(in_driveCsv);
+
+            FreeSpace = ((ulong)MemoryHelper.ChangeType<uint>(ini[""]["totalfreebyteshi"]) << 32) |
+                MemoryHelper.ChangeType<uint>(ini[""]["totalfreebyteslo"]);
+
+            Capacity = ((ulong)MemoryHelper.ChangeType<uint>(ini[""]["totalbyteshi"]) << 32) |
+                MemoryHelper.ChangeType<uint>(ini[""]["totalbyteslo"]);
         }
 
         /// <summary>
