@@ -318,7 +318,7 @@ namespace XeSharp.Device.FileSystem
 
             result += in_isFoldersIncluded
                 ? Nodes.Count()
-                : Nodes.Count(x => x.Type == EXeFileSystemNodeType.File);
+                : GetTotalFiles();
 
             foreach (var node in Nodes)
             {
