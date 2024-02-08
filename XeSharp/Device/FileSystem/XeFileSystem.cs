@@ -42,9 +42,12 @@ namespace XeSharp.Device.FileSystem
             if (string.IsNullOrEmpty(in_path))
                 return in_path;
 
+            var work = Path.GetDirectoryName(in_path);
+            var dest = string.IsNullOrEmpty(work) ? in_path : work;
+
             var result = FormatHelper.IsAbsolutePath(in_path)
                 ? in_path
-                : Path.Combine(CurrentDirectory.ToString(), Path.GetDirectoryName(in_path));
+                : Path.Combine(CurrentDirectory.ToString(), dest);
 
             if (result?.EndsWith(':') == true)
                 result += '\\';
@@ -193,6 +196,23 @@ namespace XeSharp.Device.FileSystem
         }
 
         /// <summary>
+        /// Creates a directory node at the specified location.
+        /// </summary>
+        /// <param name="in_path">The path to create a directory node at.</param>
+        public XeFileSystemNode CreateDirectory(string in_path)
+        {
+            ArgumentException.ThrowIfNullOrEmpty(in_path);
+
+            var path = ToAbsolutePath(in_path);
+            var response = _console.Client.SendCommand($"mkdir name=\"{path}\"", false);
+
+            if (response.Status.ToHResult() != EXeDbgStatusCode.XBDM_NOERR)
+                return null;
+
+            return GetDirectoryFromPath(path);
+        }
+
+        /// <summary>
         /// Gets all logical drives on the console.
         /// </summary>
         /// <param name="in_isFlashMemoryMapped">Determines whether flash memory will be mapped in the list (only applies once per session).</param>
@@ -312,7 +332,7 @@ namespace XeSharp.Device.FileSystem
             var fileName = Path.GetFileName(in_path);
 
             if (dir == null || !dir.Nodes.Any())
-                return null;
+                return dir;
 
             foreach (var node in dir.Nodes)
             {
