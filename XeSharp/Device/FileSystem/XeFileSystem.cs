@@ -305,6 +305,9 @@ namespace XeSharp.Device.FileSystem
                 {
                     node.Drive  = in_parent.Drive ?? in_parent.GetDrive();
                     node.Parent = in_parent;
+
+                    if (in_parent is XeFileSystemDrive drive)
+                        node.Drive = drive;
                 }
 
                 if (in_isRecursiveNodes && node.Type == EXeFileSystemNodeType.Directory)

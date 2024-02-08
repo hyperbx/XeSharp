@@ -32,7 +32,6 @@ namespace XeSharp.Device.FileSystem
         /// </summary>
         public string GetFriendlyName()
         {
-            // FIXME: this isn't working for subdirectories of drives.
             var data = XeFileSystem.Download(Console, $@"{Name}\name.txt");
 
             if (data == null || data.Length <= 0)
