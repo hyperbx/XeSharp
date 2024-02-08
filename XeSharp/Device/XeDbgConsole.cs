@@ -97,7 +97,7 @@ namespace XeSharp.Device
         /// </summary>
         /// <param name="in_addr">The virtual address to read from.</param>
         /// <param name="in_length">The length of memory to read.</param>
-        public byte[] ReadBytes(uint in_addr, int in_length)
+        public byte[] ReadBytes(uint in_addr, uint in_length)
         {
             var response = Client.SendCommand($"getmem addr={in_addr} length={in_length}");
 
@@ -111,7 +111,7 @@ namespace XeSharp.Device
         /// <param name="in_addr">The virtual address to read from.</param>
         public T Read<T>(uint in_addr) where T : unmanaged
         {
-            var data = ReadBytes(in_addr, Marshal.SizeOf(typeof(T)));
+            var data = ReadBytes(in_addr, (uint)Marshal.SizeOf(typeof(T)));
 
             if (data.Length <= 0)
                 return default;
@@ -207,7 +207,7 @@ namespace XeSharp.Device
 
             /* TODO: this could (and probably should) be optimised to scan
                      in chunks, rather than downloading the entire binary. */
-            var memory = in_memory ?? ReadBytes(module.BaseAddress, (int)module.ImageSize);
+            var memory = in_memory ?? ReadBytes(module.BaseAddress, module.ImageSize);
 
             for (uint i = 0; i < memory.Length; i++)
             {
