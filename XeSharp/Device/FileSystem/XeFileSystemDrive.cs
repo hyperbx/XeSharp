@@ -78,6 +78,19 @@ namespace XeSharp.Device.FileSystem
             return Encoding.BigEndianUnicode.GetString(data);
         }
 
+        /// <summary>
+        /// Gets friendly information about this drive.
+        /// </summary>
+        public override string GetInfo(bool in_isRecursiveNodes = false)
+        {
+            return
+                   $"Name ─────── : {(string.IsNullOrEmpty(FriendlyName) ? "None" : FriendlyName)}\n" +
+                   $"Volume ───── : {Name[..^1] ?? "Unknown"}\n" +
+                   $"Used Space ─ : {FormatHelper.ByteLengthToDecimalString(UsedSpace)} ({UsedSpace:N0} bytes)\n" +
+                   $"Free Space ─ : {FormatHelper.ByteLengthToDecimalString(FreeSpace)} ({FreeSpace:N0} bytes)\n" +
+                   $"Capacity ─── : {FormatHelper.ByteLengthToDecimalString(Capacity)} ({Capacity:N0} bytes)\n";
+        }
+
         public override string ToString()
         {
             return base.ToString() + '\\';

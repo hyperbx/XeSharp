@@ -409,7 +409,7 @@ namespace XeSharp.Device.FileSystem
         /// <summary>
         /// Gets friendly information about this node.
         /// </summary>
-        public string GetInfo(bool in_isRecursiveNodes = false)
+        public virtual string GetInfo(bool in_isRecursiveNodes = false)
         {
             var dataSize = GetTotalDataSize(in_isRecursiveNodes);
 

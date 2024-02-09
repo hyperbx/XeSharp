@@ -382,8 +382,7 @@ namespace XeSharp.Device.FileSystem
                 if (node.Type != EXeFileSystemNodeType.Directory)
                     continue;
 
-                // Refresh nodes in current directory.
-                node.Nodes = GetNodesFromPath(node.ToString(), false, node);
+                node.Refresh();
 
                 for (int j = 0; j < paths.Count; j++)
                 {
