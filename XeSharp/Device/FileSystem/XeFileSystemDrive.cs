@@ -83,8 +83,7 @@ namespace XeSharp.Device.FileSystem
         /// </summary>
         public override string GetInfo(bool in_isRecursiveNodes = false)
         {
-            return
-                   $"Name ─────── : {(string.IsNullOrEmpty(FriendlyName) ? "None" : FriendlyName)}\n" +
+            return $"Name ─────── : {(string.IsNullOrEmpty(FriendlyName) ? "None" : FriendlyName)}\n" +
                    $"Volume ───── : {Name[..^1] ?? "Unknown"}\n" +
                    $"Used Space ─ : {FormatHelper.ByteLengthToDecimalString(UsedSpace)} ({UsedSpace:N0} bytes)\n" +
                    $"Free Space ─ : {FormatHelper.ByteLengthToDecimalString(FreeSpace)} ({FreeSpace:N0} bytes)\n" +
