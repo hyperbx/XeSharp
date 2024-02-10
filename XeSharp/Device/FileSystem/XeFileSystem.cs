@@ -42,12 +42,9 @@ namespace XeSharp.Device.FileSystem
             if (string.IsNullOrEmpty(in_path))
                 return in_path;
 
-            var work = Path.GetDirectoryName(in_path);
-            var dest = string.IsNullOrEmpty(work) ? in_path : work;
-
             var result = FormatHelper.IsAbsolutePath(in_path)
                 ? in_path
-                : Path.Combine(CurrentDirectory.ToString(), dest);
+                : Path.Combine(CurrentDirectory.ToString(), in_path);
 
             if (result?.EndsWith(':') == true)
                 result += '\\';
@@ -61,7 +58,7 @@ namespace XeSharp.Device.FileSystem
         /// <param name="in_path">The path to check.</param>
         public bool Exists(string in_path)
         {
-            var response = _console.Client.SendCommand($"getfileattributes name=\"{GetNodeFromPath(in_path)}\"", false);
+            var response = _console.Client.SendCommand($"getfileattributes name=\"{ToAbsolutePath(in_path)}\"", false);
 
             return response.Status.ToHResult() != EXeDbgStatusCode.XBDM_NOSUCHFILE;
         }
@@ -209,7 +206,7 @@ namespace XeSharp.Device.FileSystem
             if (response.Status.ToHResult() != EXeDbgStatusCode.XBDM_NOERR)
                 return null;
 
-            return GetDirectoryFromPath(path);
+            return GetNodeFromPath(path);
         }
 
         /// <summary>
@@ -326,33 +323,8 @@ namespace XeSharp.Device.FileSystem
         /// Gets a node from the input path.
         /// </summary>
         /// <param name="in_path">The expected path for the node.</param>
-        public XeFileSystemNode GetNodeFromPath(string in_path)
-        {
-            if (string.IsNullOrEmpty(in_path))
-                return null;
-
-            var dir = GetDirectoryFromPath(ToAbsolutePath(in_path));
-            var fileName = Path.GetFileName(in_path);
-
-            if (dir == null || !dir.Nodes.Any())
-                return dir;
-
-            foreach (var node in dir.Nodes)
-            {
-                // Paths are case-insensitive.
-                if (node.Name.ToLower() == fileName.ToLower())
-                    return node;
-            }
-
-            return null;
-        }
-
-        /// <summary>
-        /// Gets a directory node from the input path.
-        /// </summary>
-        /// <param name="in_path">The expected path for the directory node.</param>
         /// <param name="in_node">The directory node to search in.</param>
-        public XeFileSystemNode GetDirectoryFromPath(string in_path, XeFileSystemNode in_node = null)
+        public XeFileSystemNode GetNodeFromPath(string in_path, XeFileSystemNode in_node = null)
         {
             if (string.IsNullOrEmpty(in_path))
                 return null;
@@ -379,10 +351,8 @@ namespace XeSharp.Device.FileSystem
             {
                 var node = dir.Nodes.ElementAt(i);
 
-                if (node.Type != EXeFileSystemNodeType.Directory)
-                    continue;
-
-                node.Refresh();
+                if (node.Type == EXeFileSystemNodeType.Directory)
+                    node.Refresh();
 
                 for (int j = 0; j < paths.Count; j++)
                 {
@@ -403,7 +373,8 @@ namespace XeSharp.Device.FileSystem
                     if (paths.Count == 1)
                         return node;
 
-                    dir = GetDirectoryFromPath(string.Join('\\', paths.Skip(1)), node);
+                    if (node.Type == EXeFileSystemNodeType.Directory)
+                        dir = GetNodeFromPath(string.Join('\\', paths.Skip(1)), node);
                 }
             }
 
@@ -416,7 +387,7 @@ namespace XeSharp.Device.FileSystem
         /// <param name="in_path">The path to change to.</param>
         public XeFileSystemNode ChangeDirectory(string in_path)
         {
-            return CurrentDirectory = GetDirectoryFromPath(in_path);
+            return CurrentDirectory = GetNodeFromPath(in_path);
         }
     }
 }
