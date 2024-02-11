@@ -206,6 +206,9 @@ namespace XeSharp.Net.Sockets
 
         #region Reading Methods
 
+        /// <summary>
+        /// Reads a single line from the client stream.
+        /// </summary>
         public string ReadLine()
         {
             var result = string.Empty;
