@@ -8,8 +8,7 @@
         public bool IsFreebootXBDM { get; private set; }
 
         /// <summary>
-        /// The version of XBDM on the server.
-        /// <para>This is always 2.0.20353.0 for Freeboot XBDM.</para>
+        /// The XDK version of XBDM on the server.
         /// </summary>
         public Version DebuggerVersion { get; private set; }
 
