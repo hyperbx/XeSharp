@@ -24,59 +24,59 @@ namespace XeSharp.Debug.Processor
         public bool IsCommitOnChange { get; set; }
 
         /// <summary>
-        /// Machine state register - stores information regarding the CPU and its current state.
+        /// Machine State Register (MSR) - stores information regarding the CPU and its current state.
         /// </summary>
         public uint MSR { get; set; }
 
         /// <summary>
-        /// Instruction address register - stores the virtual address of the current instruction.
+        /// Instruction Address Register (IAR) - stores the virtual address of the current instruction.
         /// </summary>
         public uint IAR { get; set; }
 
         /// <summary>
-        /// Link register - stores the return address for the next branch instruction.
+        /// Link Register (LR) - stores the return address for the next branch instruction.
         /// </summary>
         public uint LR { get; set; }
 
         /// <summary>
-        /// Count register - stores the current iteration of a loop or a pointer to a virtual function.
+        /// CounT Register (CTR) - stores the current iteration of a loop or a pointer to a virtual function.
         /// </summary>
         public ulong CTR { get; set; }
 
         /// <summary>
-        /// General purpose registers.
+        /// General Purpose Registers (GPR0-31).
         /// <para>For more information, see the <a href="https://zenith.nsmbu.net/wiki/Custom_Code/PowerPC_Assembly_Cheatsheet">PowerPC Assembly Cheetsheet</a>.</para>
         /// </summary>
         public RegisterSet<ulong> GPR { get; set; } = new(32);
 
         /// <summary>
-        /// Condition register - stores conditional results for previous instructions.
+        /// Condition Register (CR) - stores conditional results for previous instructions.
         /// </summary>
         public ConditionRegister CR { get; set; } = new(0);
 
         /// <summary>
-        /// Fixed point exception register - stores information regarding erroneous operations.
+        /// fiXed point Exception Register (XER) - stores information regarding erroneous operations.
         /// </summary>
         public FixedPointExceptionRegister XER { get; set; } = new(0);
 
         /// <summary>
-        /// Floating point status and control register - stores exception and rounding control information for floating point arithmetic.
+        /// Floating Point Status and Control Register (FPSCR) - stores exception and rounding control information for floating point arithmetic.
         /// </summary>
         public FloatingPointStatusControlRegister FPSCR { get; set; } = new(0);
 
         /// <summary>
-        /// Floating point registers.
+        /// Floating Point Registers (FPR0-31).
         /// <para>For more information, see the <a href="https://zenith.nsmbu.net/wiki/Custom_Code/PowerPC_Assembly_Cheatsheet">PowerPC Assembly Cheetsheet</a>.</para>
         /// </summary>
         public RegisterSet<double> FPR { get; set; } = new(32);
 
         /// <summary>
-        /// Vector status and control register (VMX128).
+        /// Vector Status and Control Register (VSCR).
         /// </summary>
         public Vector4 VSCR { get; set; }
 
         /// <summary>
-        /// Vector registers (VMX128).
+        /// Vector Registers (VR0-127).
         /// </summary>
         public RegisterSet<Vector4> VR { get; set; } = new(128);
 
