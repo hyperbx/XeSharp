@@ -43,7 +43,7 @@ namespace XeSharp.Device.Title
         /// <summary>
         /// The thread this module is running on.
         /// </summary>
-        [IniProperty(Key = "thread", Alias = "dllthread")] public uint Thread { get; set; }
+        [IniProperty(Key = "thread", Alias = "dllthread")] public int Thread { get; set; }
 
         /// <summary>
         /// The original size of this module.

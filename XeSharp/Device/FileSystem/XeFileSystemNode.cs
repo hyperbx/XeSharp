@@ -1,4 +1,5 @@
-﻿using XeSharp.Helpers;
+﻿using System.Diagnostics.CodeAnalysis;
+using XeSharp.Helpers;
 using XeSharp.Net;
 using XeSharp.Serialisation.INI;
 
@@ -45,7 +46,7 @@ namespace XeSharp.Device.FileSystem
         /// <summary>
         /// The console pertaining to this node.
         /// </summary>
-        public XeDbgConsole Console { get; internal set; }
+        public XeConsole Console { get; internal set; }
 
         /// <summary>
         /// The drive pertaining to this node.
@@ -93,7 +94,7 @@ namespace XeSharp.Device.FileSystem
         /// </summary>
         /// <param name="in_console">The console pertaining to this node.</param>
         /// <param name="in_nodeCsv">The space-separated values for information about this node.</param>
-        public XeFileSystemNode(XeDbgConsole in_console, string in_nodeCsv)
+        public XeFileSystemNode(XeConsole in_console, string in_nodeCsv)
         {
             var ini = IniParser.DoInline(in_nodeCsv);
 
@@ -128,7 +129,7 @@ namespace XeSharp.Device.FileSystem
         /// <summary>
         /// Deletes this node.
         /// </summary>
-        public XeDbgResponse Delete()
+        public XeResponse Delete()
         {
             if (Type == EXeFileSystemNodeType.Directory)
             {
@@ -435,6 +436,27 @@ namespace XeSharp.Device.FileSystem
                 return string.Empty;
 
             return Parent == null ? Name : Path.Combine(Parent.ToString(), Name);
+        }
+
+        public override bool Equals([NotNullWhen(true)] object? in_obj)
+        {
+            if (in_obj is XeFileSystemNode node)
+            {
+                return Name == node.Name &&
+                       Size == node.Size &&
+                       DateCreated == node.DateCreated &&
+                       DateModified == node.DateModified &&
+                       Type == node.Type &&
+                       Attributes == node.Attributes &&
+                       IsRoot == node.IsRoot &&
+                       Console == node.Console &&
+                       Drive == node.Drive &&
+                       Parent == node.Parent &&
+                       Nodes == node.Nodes &&
+                       Data == node.Data;
+            }
+
+            return base.Equals(in_obj);
         }
     }
 }

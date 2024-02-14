@@ -6,7 +6,7 @@ using XeSharp.Net.Events;
 
 namespace XeSharp.Net.Sockets
 {
-    public class XeDbgClient : IDisposable
+    public class XeClient : IDisposable
     {
         internal TcpClient Client { get; private set; }
         internal StreamReader Reader { get; private set; }
@@ -15,12 +15,12 @@ namespace XeSharp.Net.Sockets
         /// <summary>
         /// Information about this client.
         /// </summary>
-        public XeDbgClientInfo Info { get; private set; }
+        public XeClientInfo Info { get; private set; }
 
         /// <summary>
         /// The last response from this client.
         /// </summary>
-        public XeDbgResponse Response { get; private set; }
+        public XeResponse Response { get; private set; }
 
         /// <summary>
         /// The host name or IP address of the server this client is connected to.
@@ -45,13 +45,13 @@ namespace XeSharp.Net.Sockets
         public event ClientReadEventHandler ReadEvent;
         public event ClientWriteEventHandler WriteEvent;
 
-        public XeDbgClient() { }
+        public XeClient() { }
 
         /// <summary>
         /// Connects to a server via its host name or IP address.
         /// </summary>
         /// <param name="in_hostName">The host name or IP address of the server.</param>
-        public XeDbgClient(string in_hostName)
+        public XeClient(string in_hostName)
         {
             Connect(in_hostName);
         }
@@ -76,7 +76,7 @@ namespace XeSharp.Net.Sockets
             ResetCancel();
             Pop();
 
-            Info = new XeDbgClientInfo(this);
+            Info = new XeClientInfo(this);
             Response = null;
         }
 
@@ -145,7 +145,7 @@ namespace XeSharp.Net.Sockets
 
                 var response = task.Result;
 
-                if (response?.Status?.ToHResult() != EXeDbgStatusCode.XBDM_NOERR)
+                if (response?.Status?.ToHResult() != EXeStatusCode.XBDM_NOERR)
                     return false;
             }
             catch
@@ -174,7 +174,7 @@ namespace XeSharp.Net.Sockets
         /// </summary>
         /// <param name="in_command">The command to send.</param>
         /// <param name="in_isThrowExceptionOnServerError">Determines whether an exception will be thrown if the client encounters an error response from the server.</param>
-        public XeDbgResponse SendCommand(string in_command, bool in_isThrowExceptionOnServerError = true)
+        public XeResponse SendCommand(string in_command, bool in_isThrowExceptionOnServerError = true)
         {
             if (!IsConnected)
                 return null;
@@ -188,12 +188,12 @@ namespace XeSharp.Net.Sockets
         /// Gets the last response from the server.
         /// </summary>
         /// <param name="in_isThrowExceptionOnServerError">Determines whether an exception will be thrown if the client encounters an error response from the server.</param>
-        public XeDbgResponse GetResponse(bool in_isThrowExceptionOnServerError = true)
+        public XeResponse GetResponse(bool in_isThrowExceptionOnServerError = true)
         {
             if (!IsConnected)
                 return null;
 
-            var response = new XeDbgResponse(this);
+            var response = new XeResponse(this);
 
             if (in_isThrowExceptionOnServerError && response.Status.IsFailed())
                 throw new Exception(response.Status.ToString());
@@ -241,7 +241,7 @@ namespace XeSharp.Net.Sockets
             {
                 var line = ReadLine();
 
-                if (string.IsNullOrEmpty(line) || line == "." || XeDbgResponse.IsStatusMessage(line))
+                if (string.IsNullOrEmpty(line) || line == "." || XeResponse.IsStatusMessage(line))
                     break;
 
                 result.Add(line);
@@ -435,8 +435,6 @@ namespace XeSharp.Net.Sockets
             Client?.Close();
             Reader?.Dispose();
             Writer?.Dispose();
-
-            GC.SuppressFinalize(this);
         }
     }
 }

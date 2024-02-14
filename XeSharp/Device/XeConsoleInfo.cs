@@ -1,6 +1,6 @@
 ﻿namespace XeSharp.Device
 {
-    public class XeDbgConsoleInfo
+    public class XeConsoleInfo
     {
         /// <summary>
         /// The name of this console.
@@ -57,9 +57,9 @@
         /// </summary>
         public Version XDKVersion { get; private set; }
 
-        public XeDbgConsoleInfo() { }
+        public XeConsoleInfo() { }
 
-        public XeDbgConsoleInfo(XeDbgConsole in_console)
+        public XeConsoleInfo(XeConsole in_console)
         {
             DebugName = in_console.Client.SendCommand("dbgname")?.Message ?? "Xbox 360";
 

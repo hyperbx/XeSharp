@@ -2,12 +2,12 @@
 
 namespace XeSharp.Net
 {
-    public class XeDbgResponse
+    public class XeResponse
     {
         /// <summary>
         /// The status code received by this response.
         /// </summary>
-        public XeDbgStatusCode Status { get; private set; } = new XeDbgStatusCode(400);
+        public XeStatusCode Status { get; private set; } = new XeStatusCode(400);
 
         /// <summary>
         /// The message received by this response.
@@ -19,13 +19,13 @@ namespace XeSharp.Net
         /// </summary>
         public object[] Results { get; private set; }
 
-        public XeDbgResponse() { }
+        public XeResponse() { }
 
         /// <summary>
         /// Creates a response from the client.
         /// </summary>
         /// <param name="in_client">The client to get the response from.</param>
-        public XeDbgResponse(XeDbgClient in_client)
+        public XeResponse(XeClient in_client)
         {
             var response = Parse(in_client);
 
@@ -40,7 +40,7 @@ namespace XeSharp.Net
         /// <param name="in_status">The status code of the response.</param>
         /// <param name="in_message">The message of the response.</param>
         /// <param name="in_results">The data of the response.</param>
-        public XeDbgResponse(XeDbgStatusCode in_status, string in_message, object[] in_results = null)
+        public XeResponse(XeStatusCode in_status, string in_message, object[] in_results = null)
         {
             Status = in_status;
             Message = in_message;
@@ -53,20 +53,20 @@ namespace XeSharp.Net
         /// <param name="in_status">The raw status code of the response.</param>
         /// <param name="in_message">The message of the response.</param>
         /// <param name="in_results">The data of the response.</param>
-        public XeDbgResponse(uint in_status, string in_message, object[] in_results = null)
-            : this(new XeDbgStatusCode(in_status), in_message, in_results) { }
+        public XeResponse(uint in_status, string in_message, object[] in_results = null)
+            : this(new XeStatusCode(in_status), in_message, in_results) { }
 
         /// <summary>
         /// Parses the response from the client stream.
         /// </summary>
         /// <param name="in_client">The client to parse the response from.</param>
         /// <param name="in_isAssumeSuccessOnInvalidStatusCode">Determines whether the response will be assumed successful if the status code cannot be parsed from the client stream.</param>
-        public static XeDbgResponse Parse(XeDbgClient in_client, bool in_isAssumeSuccessOnInvalidStatusCode = false)
+        public static XeResponse Parse(XeClient in_client, bool in_isAssumeSuccessOnInvalidStatusCode = false)
         {
             var buffer = in_client.ReadLine();
 
             if (string.IsNullOrEmpty(buffer))
-                return new XeDbgResponse();
+                return new XeResponse();
 
             var tokens = buffer.Split('-', StringSplitOptions.RemoveEmptyEntries);
 
@@ -78,7 +78,7 @@ namespace XeSharp.Net
                 // HACK: necessity for custom commands in Natelx's version of XBDM.
                 if (in_isAssumeSuccessOnInvalidStatusCode || in_client.Info?.IsFreebootXBDM == true)
                 {
-                    status = XeDbgStatusCode.ToStatusCode(EXeDbgStatusCode.XBDM_NOERR);
+                    status = XeStatusCode.ToStatusCode(EXeStatusCode.XBDM_NOERR);
                     isStatusParsed = false;
                 }
                 else
@@ -87,16 +87,16 @@ namespace XeSharp.Net
                 }
             }
 
-            var hResult = XeDbgStatusCode.ToHResult(status);
+            var hResult = XeStatusCode.ToHResult(status);
             var message = tokens[isStatusParsed ? 1 : 0].Trim();
 
             /* Handle binary response manually post-response.
                We could read the data here straight into a buffer,
                but we may run out of memory if not streamed somewhere. */
-            if (hResult == EXeDbgStatusCode.XBDM_BINRESPONSE)
-                return new XeDbgResponse(status, message);
+            if (hResult == EXeStatusCode.XBDM_BINRESPONSE)
+                return new XeResponse(status, message);
 
-            var isMultiResponse = hResult == EXeDbgStatusCode.XBDM_MULTIRESPONSE;
+            var isMultiResponse = hResult == EXeStatusCode.XBDM_MULTIRESPONSE;
 
             if (!string.IsNullOrEmpty(message))
             {
@@ -107,9 +107,9 @@ namespace XeSharp.Net
 
             // Handle multi-line response.
             if (isMultiResponse || !isStatusParsed)
-                return new XeDbgResponse(status, message, in_client.ReadLines());
+                return new XeResponse(status, message, in_client.ReadLines());
 
-            return new XeDbgResponse(status, message);
+            return new XeResponse(status, message);
         }
 
         /// <summary>
@@ -117,7 +117,7 @@ namespace XeSharp.Net
         /// </summary>
         /// <param name="in_client">The client to parse the response from.</param>
         /// <param name="out_response">The response parsed from the client stream.</param>
-        public static bool TryParse(XeDbgClient in_client, out XeDbgResponse out_response)
+        public static bool TryParse(XeClient in_client, out XeResponse out_response)
         {
             try
             {

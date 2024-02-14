@@ -36,7 +36,7 @@ namespace XeSharp.Device.FileSystem
         /// <param name="in_console">The console this drive belongs to.</param>
         /// <param name="in_name">The name of this drive.</param>
         /// <param name="in_nodes">The nodes in this drive.</param>
-        public XeFileSystemDrive(XeDbgConsole in_console, string in_name, List<XeFileSystemNode> in_nodes = null)
+        public XeFileSystemDrive(XeConsole in_console, string in_name, List<XeFileSystemNode> in_nodes = null)
         {
             Name = in_name;
             Nodes = in_nodes;

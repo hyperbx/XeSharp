@@ -6,7 +6,7 @@ namespace XeSharp.Device.FileSystem
 {
     public class XeFileSystem
     {
-        protected XeDbgConsole _console;
+        protected XeConsole _console;
 
         /// <summary>
         /// The current navigated directory.
@@ -25,7 +25,7 @@ namespace XeSharp.Device.FileSystem
         /// </summary>
         /// <param name="in_console">The console to load the filesystem from.</param>
         /// <param name="in_isFullFileSystemMapped">Determines whether the entire filesystem will be mapped in this instance.</param>
-        public XeFileSystem(XeDbgConsole in_console, bool in_isFullFileSystemMapped = true)
+        public XeFileSystem(XeConsole in_console, bool in_isFullFileSystemMapped = true)
         {
             _console = in_console;
 
@@ -60,7 +60,7 @@ namespace XeSharp.Device.FileSystem
         {
             var response = _console.Client.SendCommand($"getfileattributes name=\"{ToAbsolutePath(in_path)}\"", false);
 
-            return response.Status.ToHResult() != EXeDbgStatusCode.XBDM_NOSUCHFILE;
+            return response.Status.ToHResult() != EXeStatusCode.XBDM_NOSUCHFILE;
         }
 
         /// <summary>
@@ -69,7 +69,7 @@ namespace XeSharp.Device.FileSystem
         /// <param name="in_console">The console containing the file or directory.</param>
         /// <param name="in_path">The path to the file or directory to delete.</param>
         /// <param name="in_type">The type of node to delete.</param>
-        public static XeDbgResponse Delete(XeDbgConsole in_console, string in_path, EXeFileSystemNodeType in_type = EXeFileSystemNodeType.File)
+        public static XeResponse Delete(XeConsole in_console, string in_path, EXeFileSystemNodeType in_type = EXeFileSystemNodeType.File)
         {
             var cmd = $"delete name=\"{in_path}\"";
 
@@ -83,7 +83,7 @@ namespace XeSharp.Device.FileSystem
         /// Deletes a remote file or directory.
         /// </summary>
         /// <param name="in_path">The path to the file or directory to delete.</param>
-        public XeDbgResponse Delete(string in_path)
+        public XeResponse Delete(string in_path)
         {
             var node = GetNodeFromPath(in_path);
 
@@ -96,11 +96,11 @@ namespace XeSharp.Device.FileSystem
         /// <param name="in_console">The console containing the file.</param>
         /// <param name="in_path">The path to the file to download.</param>
         /// <param name="in_stream">The stream to write the file's data to.</param>
-        public static void Download(XeDbgConsole in_console, string in_path, Stream in_stream)
+        public static void Download(XeConsole in_console, string in_path, Stream in_stream)
         {
             var response = in_console.Client.SendCommand($"getfile name=\"{in_path}\"", false);
 
-            if (response.Status.ToHResult() != EXeDbgStatusCode.XBDM_BINRESPONSE)
+            if (response.Status.ToHResult() != EXeStatusCode.XBDM_BINRESPONSE)
                 return;
 
             in_console.Client.CopyTo(in_stream);
@@ -112,11 +112,11 @@ namespace XeSharp.Device.FileSystem
         /// </summary>
         /// <param name="in_console">The console containing the file.</param>
         /// <param name="in_path">The path to the file to download.</param>
-        public static byte[] Download(XeDbgConsole in_console, string in_path)
+        public static byte[] Download(XeConsole in_console, string in_path)
         {
             var response = in_console.Client.SendCommand($"getfile name=\"{in_path}\"", false);
 
-            if (response.Status.ToHResult() != EXeDbgStatusCode.XBDM_BINRESPONSE)
+            if (response.Status.ToHResult() != EXeStatusCode.XBDM_BINRESPONSE)
                 return [];
 
             return in_console.Client.ReadBytes();
@@ -148,7 +148,7 @@ namespace XeSharp.Device.FileSystem
             var response = _console.Client.SendCommand(
                 $"sendfile name=\"{ToAbsolutePath(in_destination)}\" length={in_data.Length}");
 
-            if (response.Status.ToHResult() != EXeDbgStatusCode.XBDM_READYFORBIN)
+            if (response.Status.ToHResult() != EXeStatusCode.XBDM_READYFORBIN)
                 throw new IOException("An internal error occurred and the data could not be sent.");
 
             // TODO: stream?
@@ -203,7 +203,7 @@ namespace XeSharp.Device.FileSystem
             var path = ToAbsolutePath(in_path);
             var response = _console.Client.SendCommand($"mkdir name=\"{path}\"", false);
 
-            if (response.Status.ToHResult() != EXeDbgStatusCode.XBDM_NOERR)
+            if (response.Status.ToHResult() != EXeStatusCode.XBDM_NOERR)
                 return null;
 
             return GetNodeFromPath(path);

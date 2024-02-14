@@ -7,26 +7,31 @@ using XeSharp.Net.Sockets;
 
 namespace XeSharp.Device
 {
-    public class XeDbgConsole
+    public class XeConsole
     {
         private const int _maxCommandLength = 512;
 
         /// <summary>
+        /// The default thread ID used by the foreground module.
+        /// </summary>
+        public const int MainThreadID = -117440512; // 0xF9000000
+
+        /// <summary>
         /// The client connected to this console.
         /// </summary>
-        public XeDbgClient Client { get; private set; }
+        public XeClient Client { get; private set; }
 
         /// <summary>
         /// Information about this console.
         /// </summary>
-        public XeDbgConsoleInfo Info { get; private set; }
+        public XeConsoleInfo Info { get; private set; }
 
         /// <summary>
         /// This console's filesystem.
         /// </summary>
         public XeFileSystem FileSystem { get; private set; }
 
-        public XeDbgConsole() { }
+        public XeConsole() { }
 
         /// <summary>
         /// Connects to a console via a pre-existing client.
@@ -34,14 +39,14 @@ namespace XeSharp.Device
         /// <param name="in_client">The client to connect to the console.</param>
         /// <param name="in_isClientOnly">Determines whether only the client will be initialised.</param>
         /// <param name="in_isFullFileSystemMap">Determines whether the full filesystem will be mapped.</param>
-        public XeDbgConsole(XeDbgClient in_client, bool in_isClientOnly = false, bool in_isFullFileSystemMap = true)
+        public XeConsole(XeClient in_client, bool in_isClientOnly = false, bool in_isFullFileSystemMap = true)
         {
             Client = in_client;
 
             if (in_isClientOnly)
                 return;
 
-            Info = new XeDbgConsoleInfo(this);
+            Info = new XeConsoleInfo(this);
             FileSystem = new XeFileSystem(this, in_isFullFileSystemMap);
         }
 
@@ -51,8 +56,8 @@ namespace XeSharp.Device
         /// <param name="in_hostName">The host name or IP address of the console.</param>
         /// <param name="in_isClientOnly">Determines whether only the client will be initialised.</param>
         /// <param name="in_isFullFileSystemMap">Determines whether the full filesystem will be mapped.</param>
-        public XeDbgConsole(string in_hostName, bool in_isClientOnly = false, bool in_isFullFileSystemMap = true)
-            : this(new XeDbgClient(in_hostName), in_isClientOnly, in_isFullFileSystemMap) { }
+        public XeConsole(string in_hostName, bool in_isClientOnly = false, bool in_isFullFileSystemMap = true)
+            : this(new XeClient(in_hostName), in_isClientOnly, in_isFullFileSystemMap) { }
 
         /// <summary>
         /// Restarts the console.
@@ -124,7 +129,7 @@ namespace XeSharp.Device
         /// </summary>
         /// <param name="in_addr">The virtual address to write to.</param>
         /// <param name="in_data">The buffer to write.</param>
-        public XeDbgResponse WriteBytes(uint in_addr, byte[] in_data)
+        public XeResponse WriteBytes(uint in_addr, byte[] in_data)
         {
             var cmd = $"setmem addr={in_addr} data=";
 
@@ -143,7 +148,7 @@ namespace XeSharp.Device
         /// <typeparam name="T">The implicit type to write.</typeparam>
         /// <param name="in_addr">The virtual address to write to.</param>
         /// <param name="in_data">The data to write.</param>
-        public XeDbgResponse Write<T>(uint in_addr, T in_data) where T : unmanaged
+        public XeResponse Write<T>(uint in_addr, T in_data) where T : unmanaged
         {
             return WriteBytes(in_addr, MemoryHelper.StructureToByteArray(in_data));
         }
@@ -171,7 +176,7 @@ namespace XeSharp.Device
         /// <summary>
         /// Gets the current foreground module.
         /// </summary>
-        public XeModuleInfo GetForegroundModule()
+        public XeModuleInfo GetMainModule()
         {
             var modules = GetModules();
 
@@ -179,6 +184,40 @@ namespace XeSharp.Device
                 return default;
 
             return modules.Last().Value;
+        }
+
+        /// <summary>
+        /// Gets all threads.
+        /// </summary>
+        public Dictionary<int, XeThreadInfo> GetThreads()
+        {
+            var result = new Dictionary<int, XeThreadInfo>();
+            var threadIDs = Client.SendCommand("threads");
+
+            if (threadIDs.Status.ToHResult() != EXeStatusCode.XBDM_MULTIRESPONSE)
+                return [];
+
+            foreach (var thread in (string[])threadIDs.Results)
+            {
+                var threadID = MemoryHelper.ChangeType<int>(thread);
+
+                result.Add(threadID, new XeThreadInfo(this, threadID));
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Gets the current thread.
+        /// </summary>
+        public XeThreadInfo GetMainThread()
+        {
+            var threads = GetThreads();
+
+            if (threads.Count <= 0)
+                return default;
+
+            return threads[MainThreadID];
         }
 
         /// <summary>

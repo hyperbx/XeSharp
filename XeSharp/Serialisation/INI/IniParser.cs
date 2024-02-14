@@ -69,7 +69,7 @@ namespace XeSharp.Serialisation.INI
         /// <typeparam name="T">The class type.</typeparam>
         /// <param name="in_obj">The class using <see cref="IniPropertyAttribute"/> on its members.</param>
         /// <param name="in_ini">The lines to parse.</param>
-        public static void DoLines<T>(T in_obj, string[] in_ini)
+        public static Dictionary<string, Dictionary<string, string>> DoLines<T>(T in_obj, string[] in_ini)
         {
             var ini = DoLines(in_ini);
 
@@ -95,6 +95,8 @@ namespace XeSharp.Serialisation.INI
 
                 property.SetValue(in_obj, MemoryHelper.ChangeType(out_value, property.PropertyType));
             }
+
+            return ini;
         }
 
         private static string[] SplitInlineIni(string in_line)
@@ -124,9 +126,9 @@ namespace XeSharp.Serialisation.INI
         /// <typeparam name="T">The class type.</typeparam>
         /// <param name="in_obj">The class using <see cref="IniPropertyAttribute"/> on its members.</param>
         /// <param name="in_line">The line to parse.</param>
-        public static void DoInline<T>(T in_obj, string in_line)
+        public static Dictionary<string, Dictionary<string, string>> DoInline<T>(T in_obj, string in_line)
         {
-            DoLines(in_obj, SplitInlineIni(in_line));
+            return DoLines(in_obj, SplitInlineIni(in_line));
         }
 
         /// <summary>
@@ -147,12 +149,12 @@ namespace XeSharp.Serialisation.INI
         /// <typeparam name="T">The class type.</typeparam>
         /// <param name="in_obj">The class using <see cref="IniPropertyAttribute"/> on its members.</param>
         /// <param name="in_path">The path to the *.ini file to parse.</param>
-        public static void DoFile<T>(T in_obj, string in_path)
+        public static Dictionary<string, Dictionary<string, string>> DoFile<T>(T in_obj, string in_path)
         {
             if (!File.Exists(in_path))
-                return;
+                return [];
 
-            DoLines(in_obj, File.ReadAllLines(in_path));
+            return DoLines(in_obj, File.ReadAllLines(in_path));
         }
     }
 }
