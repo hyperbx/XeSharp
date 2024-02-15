@@ -1,2 +1,2 @@
 # XeSharp
-A C# library for interfacing with Freeboot XBDM on a remote Xbox 360.
+A C# library for interfacing with XBDM on a remote Xbox 360.
