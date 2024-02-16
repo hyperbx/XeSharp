@@ -1,7 +1,4 @@
-﻿using System.Numerics;
-using static System.Runtime.InteropServices.JavaScript.JSType;
-
-namespace XeSharp.Helpers
+﻿namespace XeSharp.Helpers
 {
     public class FormatHelper
     {

@@ -155,6 +155,64 @@ namespace XeSharp.Debug.Processor
         }
 
         /// <summary>
+        /// Parses the index from a register name (e.g. "GPR0", "FPR0", etc).
+        /// <para>Only use this if absolutely necessary.</para>
+        /// </summary>
+        /// <param name="in_registerName">The name of the register.</param>
+        /// <param name="out_index">The index of the register.</param>
+        /// <returns></returns>
+        public bool TryParseRegisterIndexByName(string in_registerName, out int out_index)
+        {
+            var isRegister = in_registerName.ToLower().StartsWith("gpr") ||
+                in_registerName.ToLower().StartsWith("fpr");
+
+            if (isRegister && int.TryParse(in_registerName[3..], out int out_registerIndex))
+            {
+                out_index = out_registerIndex;
+                return true;
+            }
+
+            out_index = 0;
+            return false;
+        }
+
+        /// <summary>
+        /// Gets a General Purpose Register (GPR) by name (e.g. "GPR0", "GPR1", etc).
+        /// <para>Only use this if absolutely necessary.</para>
+        /// </summary>
+        /// <param name="in_registerName">The name of the register.</param>
+        /// <param name="out_gpr">The value of the register.</param>
+        public bool TryParseGPRByName(string in_registerName, out ulong out_gpr)
+        {
+            if (TryParseRegisterIndexByName(in_registerName, out var out_index))
+            {
+                out_gpr = GPR[out_index];
+                return true;
+            }
+
+            out_gpr = 0;
+            return false;
+        }
+
+        /// <summary>
+        /// Gets a Floating Point Register (FPR) by name (e.g. "FPR0", "FPR1", etc).
+        /// <para>Only use this if absolutely necessary.</para>
+        /// </summary>
+        /// <param name="in_registerName">The name of the register.</param>
+        /// <param name="out_fpr">The value of the register.</param>
+        public bool TryParseFPRByName(string in_registerName, out double out_fpr)
+        {
+            if (TryParseRegisterIndexByName(in_registerName, out var out_index))
+            {
+                out_fpr = FPR[out_index];
+                return true;
+            }
+
+            out_fpr = 0;
+            return false;
+        }
+
+        /// <summary>
         /// Gets a formatted representation of all registers.
         /// </summary>
         public string GetRegisterInfo()
