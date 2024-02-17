@@ -163,10 +163,15 @@ namespace XeSharp.Debug.Processor
         /// <returns></returns>
         public bool TryParseRegisterIndexByName(string in_registerName, out int out_index)
         {
-            var isRegister = in_registerName.ToLower().StartsWith("gpr") ||
+            var isRegisterFullName = in_registerName.ToLower().StartsWith("gpr") ||
                 in_registerName.ToLower().StartsWith("fpr");
 
-            if (isRegister && int.TryParse(in_registerName[3..], out int out_registerIndex))
+            var isRegisterShortName = in_registerName.ToLower().StartsWith("r") ||
+                in_registerName.ToLower().StartsWith("f");
+
+            var isRegister = isRegisterFullName || isRegisterShortName;
+
+            if (isRegister && int.TryParse(in_registerName[(isRegisterFullName ? 3 : 1)..], out int out_registerIndex))
             {
                 out_index = out_registerIndex;
                 return true;
