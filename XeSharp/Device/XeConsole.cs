@@ -136,7 +136,7 @@ namespace XeSharp.Device
             if (data.Length <= 0)
                 return default;
 
-            return MemoryHelper.ByteArrayToStructure<T>(data.Reverse().ToArray());
+            return MemoryHelper.ByteArrayToUnmanagedType<T>(data.Reverse().ToArray());
         }
 
         /// <summary>
@@ -203,7 +203,7 @@ namespace XeSharp.Device
         /// <param name="in_data">The data to write.</param>
         public XeResponse Write<T>(uint in_addr, T in_data) where T : unmanaged
         {
-            return WriteBytes(in_addr, MemoryHelper.StructureToByteArray(in_data));
+            return WriteBytes(in_addr, MemoryHelper.UnmanagedTypeToByteArray(in_data));
         }
 
         /// <summary>

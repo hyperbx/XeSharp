@@ -1,5 +1,4 @@
-﻿using Amicitia.IO.Binary;
-using System.Numerics;
+﻿using System.Numerics;
 using System.Runtime.InteropServices;
 
 namespace XeSharp.Helpers
@@ -80,7 +79,7 @@ namespace XeSharp.Helpers
         /// <typeparam name="T">The type to transform the byte array to.</typeparam>
         /// <param name="in_data">The data to transform.</param>
         /// <param name="in_isBigEndian">Determines whether the data is in big-endian format.</param>
-        public static T ByteArrayToStructure<T>(byte[] in_data, bool in_isBigEndian = false) where T : struct
+        public static T ByteArrayToUnmanagedType<T>(byte[] in_data, bool in_isBigEndian = false) where T : unmanaged
         {
             if (in_data == null || in_data.Length <= 0)
                 return default;
@@ -106,7 +105,7 @@ namespace XeSharp.Helpers
         /// <typeparam name="T">The type to transform.</typeparam>
         /// <param name="in_structure">The data to transform.</param>
         /// <param name="in_isBigEndian">Determines whether the data is in big-endian format.</param>
-        public static byte[] StructureToByteArray<T>(T in_structure, bool in_isBigEndian = true) where T : struct
+        public static byte[] UnmanagedTypeToByteArray<T>(T in_structure, bool in_isBigEndian = true) where T : unmanaged
         {
             byte[] data = new byte[Marshal.SizeOf(typeof(T))];
 
@@ -215,7 +214,7 @@ namespace XeSharp.Helpers
         {
             /* StructureToByteArray assumes big-endian by default,
                this should automatically reverse the given input. */
-            return ByteArrayToStructure<T>(StructureToByteArray(in_data));
+            return ByteArrayToUnmanagedType<T>(UnmanagedTypeToByteArray(in_data));
         }
 
         /// <summary>

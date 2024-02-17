@@ -27,7 +27,7 @@ namespace XeSharp.Debug
         public static PowerPcInstruction Disassemble(uint in_byteCode)
         {
             return CapstoneDisassembler.CreatePowerPcDisassembler(Architecture)
-                .Disassemble(MemoryHelper.StructureToByteArray(in_byteCode)).First();
+                .Disassemble(MemoryHelper.UnmanagedTypeToByteArray(in_byteCode)).First();
         }
 
         /// <summary>
