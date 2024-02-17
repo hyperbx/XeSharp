@@ -25,13 +25,13 @@ namespace XeSharp.Debug.RTTI.Types
 
         private void Read()
         {
-            pTypeDescriptor           = _console.Read<uint>(_pThis);
-            SubElementCount           = _console.Read<int>(_pThis + 0x04);
-            MemberDisplacement        = _console.Read<int>(_pThis + 0x08);
-            VftableDisplacement       = _console.Read<int>(_pThis + 0x0C);
-            DisplacementWithinVftable = _console.Read<int>(_pThis + 0x10);
-            BaseClassAttributes       = _console.Read<int>(_pThis + 0x14);
-            pClassHierarchyDescriptor = _console.Read<uint>(_pThis + 0x18);
+            pTypeDescriptor           = _console.Memory.Read<uint>(_pThis);
+            SubElementCount           = _console.Memory.Read<int>(_pThis + 0x04);
+            MemberDisplacement        = _console.Memory.Read<int>(_pThis + 0x08);
+            VftableDisplacement       = _console.Memory.Read<int>(_pThis + 0x0C);
+            DisplacementWithinVftable = _console.Memory.Read<int>(_pThis + 0x10);
+            BaseClassAttributes       = _console.Memory.Read<int>(_pThis + 0x14);
+            pClassHierarchyDescriptor = _console.Memory.Read<uint>(_pThis + 0x18);
         }
 
         public TypeDescriptor GetTypeDescriptor()

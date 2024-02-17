@@ -22,10 +22,10 @@ namespace XeSharp.Debug.RTTI.Types
 
         private void Read()
         {
-            Signature      = _console.Read<uint>(_pThis);
-            Attributes     = _console.Read<uint>(_pThis + 0x04);
-            BaseClassCount = _console.Read<uint>(_pThis + 0x08);
-            pBaseClasses   = _console.Read<uint>(_pThis + 0x0C);
+            Signature      = _console.Memory.Read<uint>(_pThis);
+            Attributes     = _console.Memory.Read<uint>(_pThis + 0x04);
+            BaseClassCount = _console.Memory.Read<uint>(_pThis + 0x08);
+            pBaseClasses   = _console.Memory.Read<uint>(_pThis + 0x0C);
         }
 
         public BaseClassDescriptor GetBaseClass(int in_index)
@@ -33,7 +33,7 @@ namespace XeSharp.Debug.RTTI.Types
             if (in_index > BaseClassCount)
                 return null;
 
-            return new BaseClassDescriptor(_console, _console.Read<uint>(pBaseClasses + (uint)in_index * 4));
+            return new BaseClassDescriptor(_console, _console.Memory.Read<uint>(pBaseClasses + (uint)in_index * 4));
         }
 
         public BaseClassDescriptor[] GetBaseClasses()

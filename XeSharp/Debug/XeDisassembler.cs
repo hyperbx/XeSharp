@@ -37,7 +37,7 @@ namespace XeSharp.Debug
         /// <param name="in_addr">The address of the instruction.</param>
         public static PowerPcInstruction Disassemble(XeConsole in_console, uint in_addr)
         {
-            return Disassemble(in_console.Read<uint>(in_addr));
+            return Disassemble(in_console.Memory.Read<uint>(in_addr));
         }
 
         /// <summary>

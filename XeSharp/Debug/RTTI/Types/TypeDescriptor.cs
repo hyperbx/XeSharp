@@ -21,13 +21,13 @@ namespace XeSharp.Debug.RTTI.Types
 
         private void Read()
         {
-            pTypeInfo   = _console.Read<uint>(_pThis);
-            pRuntimeRef = _console.Read<uint>(_pThis + 0x04);
+            pTypeInfo   = _console.Memory.Read<uint>(_pThis);
+            pRuntimeRef = _console.Memory.Read<uint>(_pThis + 0x04);
         }
 
         public string GetName(bool in_isDemangled = true, IEnumerable<EDemanglerFlags> in_demanglerFlags = null)
         {
-            var result = _console.ReadStringNullTerminated(_pThis + 0x08);
+            var result = _console.Memory.ReadStringNullTerminated(_pThis + 0x08);
 
             if (string.IsNullOrEmpty(result))
                 return string.Empty;

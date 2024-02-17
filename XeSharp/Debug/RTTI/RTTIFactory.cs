@@ -16,9 +16,9 @@ namespace XeSharp.Debug.RTTI
             if (in_pVftable == 0)
                 return null;
 
-            var addr = in_console.Read<uint>(in_pVftable - 0x04);
+            var addr = in_console.Memory.Read<uint>(in_pVftable - 0x04);
 
-            if (!in_console.IsMemoryAccessible(addr))
+            if (!in_console.Memory.IsAccessible(addr))
                 return null;
 
             return new CompleteObjectLocator(in_console, addr);
@@ -31,7 +31,7 @@ namespace XeSharp.Debug.RTTI
         /// <param name="in_pClass">The pointer to the class where the first member is a pointer back to the vftable which has RTTI.</param>
         public static CompleteObjectLocator GetRuntimeInfoFromClass(XeConsole in_console, uint in_pClass)
         {
-            return GetRuntimeInfoFromVftable(in_console, in_console.Read<uint>(in_pClass));
+            return GetRuntimeInfoFromVftable(in_console, in_console.Memory.Read<uint>(in_pClass));
         }
 
         /// <summary>

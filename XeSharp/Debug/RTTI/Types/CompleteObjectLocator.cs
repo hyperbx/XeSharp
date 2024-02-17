@@ -25,12 +25,12 @@ namespace XeSharp.Debug.RTTI.Types
 
         public void Read()
         {
-            Signature                 = _console.Read<int>(_pThis);
-            VftableOffset             = _console.Read<int>(_pThis + 0x04);
-            CtorDisplacementOffset    = _console.Read<int>(_pThis + 0x08);
-            pTypeDescriptor           = _console.Read<uint>(_pThis + 0x0C);
-            pClassHierarchyDescriptor = _console.Read<uint>(_pThis + 0x10);
-            pObjectBase               = _console.Read<uint>(_pThis + 0x14);
+            Signature                 = _console.Memory.Read<int>(_pThis);
+            VftableOffset             = _console.Memory.Read<int>(_pThis + 0x04);
+            CtorDisplacementOffset    = _console.Memory.Read<int>(_pThis + 0x08);
+            pTypeDescriptor           = _console.Memory.Read<uint>(_pThis + 0x0C);
+            pClassHierarchyDescriptor = _console.Memory.Read<uint>(_pThis + 0x10);
+            pObjectBase               = _console.Memory.Read<uint>(_pThis + 0x14);
         }
 
         public TypeDescriptor GetTypeDescriptor()
