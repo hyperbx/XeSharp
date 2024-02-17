@@ -18,6 +18,13 @@ namespace XeSharp.Debug.MSVC
             foreach (var flag in in_flags)
                 flags |= (uint)flag;
 
+            // Remove '.' prefix to allow undecorator to work.
+            in_mangledName = in_mangledName.TrimStart('.');
+
+            // Fix undecorating template classes.
+            if (in_mangledName.StartsWith("?AV?"))
+                in_mangledName = "??" + in_mangledName[4..];
+
             while (true)
             {
                 var resultLength = UnDecorateSymbolName

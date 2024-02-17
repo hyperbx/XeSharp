@@ -32,8 +32,6 @@ namespace XeSharp.Debug.RTTI.Types
             if (string.IsNullOrEmpty(result))
                 return string.Empty;
 
-            result = result.TrimStart('.');
-
             if (in_isDemangled)
             {
                 return Demangler.GetUndecoratedName(result, in_demanglerFlags ?? new[] { EDemanglerFlags.NameOnly });
