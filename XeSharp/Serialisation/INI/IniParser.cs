@@ -11,7 +11,7 @@ namespace XeSharp.Serialisation.INI
         /// <param name="in_ini">The lines to parse.</param>
         public static Dictionary<string, Dictionary<string, string>> DoLines(string[] in_ini)
         {
-            Dictionary<string, Dictionary<string, string>> result = [];
+            var result = new Dictionary<string, Dictionary<string, string>>();
 
             string section = string.Empty;
 
