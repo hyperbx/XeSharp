@@ -29,5 +29,31 @@ namespace XeSharp.Helpers
         {
             return string.IsNullOrEmpty(in_str) || string.IsNullOrWhiteSpace(in_str);
         }
+
+        /// <summary>
+        /// Gets the total amount of dereferences to a given pointer.
+        /// </summary>
+        /// <param name="in_str">A string containing an address or object name surrounded by square brackets to indicate a dereferenced pointer (e.g. [0x82000000], [[GPR3]]).</param>
+        public static int GetDereferenceCount(string in_str)
+        {
+            var result = 0;
+
+            while (in_str.StartsWith('[') && in_str.EndsWith(']'))
+            {
+                in_str = in_str[1..^1];
+                result++;
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Trims all dereference characters from a given string.
+        /// </summary>
+        /// <param name="in_str">The string to trim.</param>
+        public static string TrimDereferences(string in_str)
+        {
+            return in_str.TrimStart('[').TrimEnd(']');
+        }
     }
 }
