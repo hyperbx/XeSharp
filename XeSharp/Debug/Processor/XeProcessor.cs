@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel;
 using System.Numerics;
+using System.Text;
 using XeSharp.Collections;
 using XeSharp.Debug.Processor.Registers;
 using XeSharp.Device;
@@ -155,29 +156,48 @@ namespace XeSharp.Debug.Processor
         }
 
         /// <summary>
-        /// Parses the index from a register name (e.g. "GPR0", "FPR0", etc).
+        /// Parses a register from its name (e.g. "GPR0", "FPR0", etc).
         /// <para>Only use this if absolutely necessary.</para>
         /// </summary>
         /// <param name="in_registerName">The name of the register.</param>
+        /// <param name="out_type">The type of the register.</param>
         /// <param name="out_index">The index of the register.</param>
-        /// <returns></returns>
-        public bool TryParseRegisterIndexByName(string in_registerName, out int out_index)
+        public bool TryParseRegisterByName(string in_registerName, out ERegisterType out_type, out int out_index)
         {
-            var isRegisterFullName = in_registerName.ToLower().StartsWith("gpr") ||
-                in_registerName.ToLower().StartsWith("fpr");
+            in_registerName = in_registerName.ToLower();
 
-            var isRegisterShortName = in_registerName.ToLower().StartsWith("r") ||
-                in_registerName.ToLower().StartsWith("f");
+            var isRegisterFullName = in_registerName.StartsWith("gpr") ||
+                in_registerName.StartsWith("fpr");
+
+            var isRegisterShortName = in_registerName.StartsWith("r") ||
+                in_registerName.StartsWith("f");
 
             var isRegister = isRegisterFullName || isRegisterShortName;
 
             if (isRegister && int.TryParse(in_registerName[(isRegisterFullName ? 3 : 1)..], out int out_registerIndex))
             {
                 out_index = out_registerIndex;
+
+                if (in_registerName.StartsWith("gpr") || in_registerName.StartsWith('r'))
+                {
+                    out_type = ERegisterType.GPR;
+                }
+                else if (in_registerName.StartsWith("fpr") || in_registerName.StartsWith('f'))
+                {
+                    out_type = ERegisterType.FPR;
+                }
+                else
+                {
+                    out_type = ERegisterType.Unknown;
+                    return false;
+                }
+
                 return true;
             }
 
+            out_type = ERegisterType.Unknown;
             out_index = 0;
+
             return false;
         }
 
@@ -189,13 +209,18 @@ namespace XeSharp.Debug.Processor
         /// <param name="out_gpr">The value of the register.</param>
         public bool TryParseGPRByName(string in_registerName, out ulong out_gpr)
         {
-            if (TryParseRegisterIndexByName(in_registerName, out var out_index))
+            if (TryParseRegisterByName(in_registerName, out var out_type, out var out_index))
             {
                 out_gpr = GPR[out_index];
+
+                if (out_type != ERegisterType.GPR)
+                    return false;
+
                 return true;
             }
 
             out_gpr = 0;
+
             return false;
         }
 
@@ -207,25 +232,27 @@ namespace XeSharp.Debug.Processor
         /// <param name="out_fpr">The value of the register.</param>
         public bool TryParseFPRByName(string in_registerName, out double out_fpr)
         {
-            if (TryParseRegisterIndexByName(in_registerName, out var out_index))
+            if (TryParseRegisterByName(in_registerName, out var out_type, out var out_index))
             {
                 out_fpr = FPR[out_index];
+
+                if (out_type != ERegisterType.FPR)
+                    return false;
+
                 return true;
             }
 
             out_fpr = 0;
+
             return false;
         }
 
         /// <summary>
-        /// Gets a formatted representation of all registers.
+        /// Gets a formatted representation of the registers.
         /// </summary>
-        public string GetRegisterInfo()
+        public string GetRegisterInfo(ERegisterType in_registers = ERegisterType.All)
         {
-            var info = $"MSR ─── : 0x{MSR:X8}\n" +
-                       $"IAR ─── : 0x{IAR:X8}\n" +
-                       $"LR ──── : 0x{LR:X8}\n" +
-                       $"CTR ─── : 0x{CTR:X16}";
+            var result = new StringBuilder();
 
             static string GetLine(int in_index)
             {
@@ -237,22 +264,49 @@ namespace XeSharp.Debug.Processor
                 return "";
             }
 
-            for (int i = 0; i < GPR.Length; i++)
-                info += $"\nGPR{i} {GetLine(i)} : 0x{GPR[i]:X16}";
+            if (in_registers.HasFlag(ERegisterType.MSR))
+                result.AppendLine($"MSR ─── : 0x{MSR:X8}");
 
-            info += $"\nCR ──── : 0x{CR.Packed:X8} ({CR})";
-            info += $"\nXER ─── : 0x{XER.Packed:X8} ({XER})";
-            info += $"\nFPSCR ─ : 0x{FPSCR.Packed:X16} ({FPSCR})";
+            if (in_registers.HasFlag(ERegisterType.IAR))
+                result.AppendLine($"IAR ─── : 0x{IAR:X8}");
 
-            for (int i = 0; i < FPR.Length; i++)
-                info += $"\nFPR{i} {GetLine(i)} : 0x{BitConverter.DoubleToUInt64Bits(FPR[i]):X16} ({FPR[i]})";
+            if (in_registers.HasFlag(ERegisterType.LR))
+                result.AppendLine($"LR ──── : 0x{LR:X8}");
 
-            info += $"\nVSCR ── : <{MemoryHelper.Vector4ToHexString(VSCR)}>";
+            if (in_registers.HasFlag(ERegisterType.CTR))
+                result.AppendLine($"CTR ─── : 0x{CTR:X16}");
 
-            for (int i = 0; i < VR.Length; i++)
-                info += $"\nVR{i} ─{GetLine(i)} : <{MemoryHelper.Vector4ToHexString(VR[i])}> ({VR[i]})";
+            if (in_registers.HasFlag(ERegisterType.GPR))
+            {
+                for (int i = 0; i < GPR.Length; i++)
+                    result.AppendLine($"GPR{i} {GetLine(i)} : 0x{GPR[i]:X16}");
+            }
 
-            return info;
+            if (in_registers.HasFlag(ERegisterType.CR))
+                result.AppendLine($"CR ──── : 0x{CR.Packed:X8} ({CR})");
+
+            if (in_registers.HasFlag(ERegisterType.XER))
+                result.AppendLine($"XER ─── : 0x{XER.Packed:X8} ({XER})");
+
+            if (in_registers.HasFlag(ERegisterType.FPSCR))
+                result.AppendLine($"FPSCR ─ : 0x{FPSCR.Packed:X16} ({FPSCR})");
+
+            if (in_registers.HasFlag(ERegisterType.FPR))
+            {
+                for (int i = 0; i < FPR.Length; i++)
+                    result.AppendLine($"FPR{i} {GetLine(i)} : 0x{BitConverter.DoubleToUInt64Bits(FPR[i]):X16} ({FPR[i]})");
+            }
+
+            if (in_registers.HasFlag(ERegisterType.VSCR))
+                result.AppendLine($"VSCR ── : <{MemoryHelper.Vector4ToHexString(VSCR)}>");
+
+            if (in_registers.HasFlag(ERegisterType.VR))
+            {
+                for (int i = 0; i < VR.Length; i++)
+                    result.AppendLine($"VR{i} ─{GetLine(i)} : <{MemoryHelper.Vector4ToHexString(VR[i])}> ({VR[i]})");
+            }
+
+            return result.ToString();
         }
 
         #region Register Committing
