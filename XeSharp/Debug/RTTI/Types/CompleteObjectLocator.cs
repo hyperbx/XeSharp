@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using XeSharp.Device;
+using XeSharp.Helpers;
 
 namespace XeSharp.Debug.RTTI.Types
 {
@@ -59,6 +60,11 @@ namespace XeSharp.Debug.RTTI.Types
                 result.AppendLine($"        {@base}");
 
             return result.ToString();
+        }
+
+        public bool IsValid()
+        {
+            return !GetTypeDescriptor().GetName().IsNullOrEmptyOrWhiteSpace();
         }
 
         public override string ToString()

@@ -21,7 +21,12 @@ namespace XeSharp.Debug.RTTI
             if (!in_console.Memory.IsAccessible(addr))
                 return null;
 
-            return new CompleteObjectLocator(in_console, addr);
+            var result = new CompleteObjectLocator(in_console, addr);
+
+            if (!result.IsValid())
+                return null;
+
+            return result;
         }
 
         /// <summary>
