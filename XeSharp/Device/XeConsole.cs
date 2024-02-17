@@ -44,15 +44,12 @@ namespace XeSharp.Device
         /// <param name="in_client">The client to connect to the console.</param>
         /// <param name="in_isClientOnly">Determines whether only the client will be initialised.</param>
         /// <param name="in_isFullFileSystemMap">Determines whether the full filesystem will be mapped.</param>
-        public XeConsole(XeClient in_client, bool in_isClientOnly = false, bool in_isFullFileSystemMap = true)
+        public XeConsole(XeClient in_client, bool in_isFullFileSystemMap = false)
         {
-            Client = in_client;
-
-            if (in_isClientOnly)
-                return;
-
-            Info = new XeConsoleInfo(this);
+            Client     = in_client;
+            Info       = new XeConsoleInfo(this);
             FileSystem = new XeFileSystem(this, in_isFullFileSystemMap);
+            Memory     = new XeMemory(this);
         }
 
         /// <summary>
@@ -61,8 +58,8 @@ namespace XeSharp.Device
         /// <param name="in_hostName">The host name or IP address of the console.</param>
         /// <param name="in_isClientOnly">Determines whether only the client will be initialised.</param>
         /// <param name="in_isFullFileSystemMap">Determines whether the full filesystem will be mapped.</param>
-        public XeConsole(string in_hostName, bool in_isClientOnly = false, bool in_isFullFileSystemMap = true)
-            : this(new XeClient(in_hostName), in_isClientOnly, in_isFullFileSystemMap) { }
+        public XeConsole(string in_hostName, bool in_isFullFileSystemMap = true)
+            : this(new XeClient(in_hostName), in_isFullFileSystemMap) { }
 
         /// <summary>
         /// Restarts the console.

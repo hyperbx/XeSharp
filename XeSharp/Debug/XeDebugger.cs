@@ -34,7 +34,7 @@ namespace XeSharp.Debug
         /// <param name="in_hostName">The host name or IP address of the console to attach the debugger to.</param>
         /// <param name="in_isAttachOnLoad">Determines whether this debugger will attach to the console upon creation.</param>
         public XeDebugger(string in_hostName, bool in_isAttachOnLoad = true)
-            : this(new XeConsole(in_hostName, true, false), in_isAttachOnLoad) { }
+            : this(new XeConsole(in_hostName, false), in_isAttachOnLoad) { }
 
         /// <summary>
         /// Attaches the debugger to the input console.
