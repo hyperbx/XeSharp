@@ -1,4 +1,5 @@
 ﻿using System.Runtime.InteropServices;
+using System.Text;
 using XeSharp.Device.FileSystem;
 using XeSharp.Device.Title;
 using XeSharp.Helpers;
@@ -98,6 +99,20 @@ namespace XeSharp.Device
         }
 
         /// <summary>
+        /// Determines whether the memory address is accessible.
+        /// </summary>
+        /// <param name="in_addr">The virtual address to check.</param>
+        public bool IsMemoryAccessible(uint in_addr)
+        {
+            var response = Client.SendCommand($"getmem addr={in_addr} length=1", false);
+
+            if (response.Results.Length <= 0)
+                return false;
+
+            return (string)response.Results[0] != "??";
+        }
+
+        /// <summary>
         /// Reads a memory location into a buffer.
         /// </summary>
         /// <param name="in_addr">The virtual address to read from.</param>
@@ -122,6 +137,44 @@ namespace XeSharp.Device
                 return default;
 
             return MemoryHelper.ByteArrayToStructure<T>(data.Reverse().ToArray());
+        }
+
+        /// <summary>
+        /// Reads a null-terminated string from the memory location.
+        /// </summary>
+        /// <param name="in_addr">The virtual address to read from.</param>
+        /// <param name="in_encoding">The encoding format used by the string.</param>
+        public string ReadStringNullTerminated(uint in_addr, Encoding in_encoding = null)
+        {
+            var data = new List<byte>();
+            var encoding = in_encoding ?? Encoding.UTF8;
+
+            uint addr = in_addr;
+
+            if (encoding == Encoding.Unicode ||
+                encoding == Encoding.BigEndianUnicode)
+            {
+                ushort us;
+
+                while ((us = Read<ushort>(addr)) != 0)
+                {
+                    data.Add((byte)(us & 0xFF));
+                    data.Add((byte)((us >> 8) & 0xFF));
+                    addr += 2;
+                }
+            }
+            else
+            {
+                byte b;
+
+                while ((b = Read<byte>(addr)) != 0)
+                {
+                    data.Add(b);
+                    addr++;
+                }
+            }
+
+            return encoding.GetString(data.ToArray());
         }
 
         /// <summary>
