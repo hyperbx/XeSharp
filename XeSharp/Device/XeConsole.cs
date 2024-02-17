@@ -56,7 +56,7 @@ namespace XeSharp.Device
         /// </summary>
         /// <param name="in_hostName">The host name or IP address of the console.</param>
         /// <param name="in_isFullFileSystemMap">Determines whether the full filesystem will be mapped.</param>
-        public XeConsole(string in_hostName, bool in_isFullFileSystemMap = true)
+        public XeConsole(string in_hostName, bool in_isFullFileSystemMap = false)
             : this(new XeClient(in_hostName), in_isFullFileSystemMap) { }
 
         /// <summary>
