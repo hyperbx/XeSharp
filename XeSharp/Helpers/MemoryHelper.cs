@@ -74,7 +74,7 @@ namespace XeSharp.Helpers
         }
 
         /// <summary>
-        /// Transforms a byte array to a requested structure type.
+        /// Transforms a byte array to the specified unmanaged type.
         /// </summary>
         /// <typeparam name="T">The type to transform the byte array to.</typeparam>
         /// <param name="in_data">The data to transform.</param>
@@ -100,7 +100,7 @@ namespace XeSharp.Helpers
         }
 
         /// <summary>
-        /// Transforms a structure to a byte array.
+        /// Transforms an unmanaged object to a byte array.
         /// </summary>
         /// <typeparam name="T">The type to transform.</typeparam>
         /// <param name="in_structure">The data to transform.</param>
