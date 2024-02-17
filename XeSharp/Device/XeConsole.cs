@@ -42,7 +42,6 @@ namespace XeSharp.Device
         /// Connects to a console via a pre-existing client.
         /// </summary>
         /// <param name="in_client">The client to connect to the console.</param>
-        /// <param name="in_isClientOnly">Determines whether only the client will be initialised.</param>
         /// <param name="in_isFullFileSystemMap">Determines whether the full filesystem will be mapped.</param>
         public XeConsole(XeClient in_client, bool in_isFullFileSystemMap = false)
         {
@@ -56,7 +55,6 @@ namespace XeSharp.Device
         /// Connects to a console via its host name or IP address.
         /// </summary>
         /// <param name="in_hostName">The host name or IP address of the console.</param>
-        /// <param name="in_isClientOnly">Determines whether only the client will be initialised.</param>
         /// <param name="in_isFullFileSystemMap">Determines whether the full filesystem will be mapped.</param>
         public XeConsole(string in_hostName, bool in_isFullFileSystemMap = true)
             : this(new XeClient(in_hostName), in_isFullFileSystemMap) { }
