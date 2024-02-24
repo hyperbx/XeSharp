@@ -1,0 +1,3 @@
+[submodule "ClassAnalyser"]
+	path = ClassAnalyser
+	url = https://github.com/hyperbx/ClassAnalyser.git

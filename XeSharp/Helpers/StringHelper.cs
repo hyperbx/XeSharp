@@ -1,4 +1,5 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Text;
+using System.Text.RegularExpressions;
 
 namespace XeSharp.Helpers
 {
@@ -54,6 +55,21 @@ namespace XeSharp.Helpers
         public static string TrimDereferences(string in_str)
         {
             return in_str.TrimStart('[').TrimEnd(']');
+        }
+
+        /// <summary>
+        /// Makes a new string of repeated strings.
+        /// </summary>
+        /// <param name="in_str">The string to repeat.</param>
+        /// <param name="in_count">The number of times to repeat.</param>
+        public static string MakeRepeated(string in_str, int in_count)
+        {
+            var result = new StringBuilder();
+
+            for (int i = 0; i < in_count; i++)
+                result.Append(in_str);
+
+            return result.ToString();
         }
     }
 }

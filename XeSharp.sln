@@ -5,6 +5,10 @@ VisualStudioVersion = 17.9.34414.90
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "XeSharp", "XeSharp\XeSharp.csproj", "{83E2CC97-5E92-434E-AE2F-7E1AF551B2EA}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "XeSharp.Test", "XeSharp.Test\XeSharp.Test.csproj", "{B23D2016-2A9E-4CF9-9BA3-A0700D3F3605}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ClassAnalyserLib", "ClassAnalyser\ClassAnalyserLib\ClassAnalyserLib.csproj", "{0C706DEE-F3F0-45BB-8AFA-715B4492331C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +19,14 @@ Global
 		{83E2CC97-5E92-434E-AE2F-7E1AF551B2EA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{83E2CC97-5E92-434E-AE2F-7E1AF551B2EA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{83E2CC97-5E92-434E-AE2F-7E1AF551B2EA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B23D2016-2A9E-4CF9-9BA3-A0700D3F3605}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B23D2016-2A9E-4CF9-9BA3-A0700D3F3605}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B23D2016-2A9E-4CF9-9BA3-A0700D3F3605}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B23D2016-2A9E-4CF9-9BA3-A0700D3F3605}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0C706DEE-F3F0-45BB-8AFA-715B4492331C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0C706DEE-F3F0-45BB-8AFA-715B4492331C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0C706DEE-F3F0-45BB-8AFA-715B4492331C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0C706DEE-F3F0-45BB-8AFA-715B4492331C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,5 +1,7 @@
 ﻿using System.Runtime.InteropServices;
 using System.Text;
+using XeSharp.Debug;
+using XeSharp.Device.Title;
 using XeSharp.Helpers;
 using XeSharp.Net;
 
@@ -8,6 +10,9 @@ namespace XeSharp.Device.Memory
     public class XeMemory(XeConsole in_console)
     {
         protected XeConsole _console = in_console;
+
+        private XeModuleInfo _moduleBufferOwner;
+        private byte[] _moduleBuffer;
 
         /// <summary>
         /// Determines whether the memory address is accessible.
@@ -89,22 +94,6 @@ namespace XeSharp.Device.Memory
         }
 
         /// <summary>
-        /// Dereferences a pointer.
-        /// </summary>
-        /// <param name="in_addr">The pointer to dereference from.</param>
-        /// <param name="in_count">The amount of times to dereference this pointer.</param>
-        public uint DereferencePointer(uint in_addr, int in_count)
-        {
-            while (in_count > 0)
-            {
-                in_addr = Read<uint>(in_addr);
-                in_count--;
-            }
-
-            return in_addr;
-        }
-
-        /// <summary>
         /// Writes a buffer to a memory location.
         /// </summary>
         /// <param name="in_addr">The virtual address to write to.</param>
@@ -134,6 +123,80 @@ namespace XeSharp.Device.Memory
         }
 
         /// <summary>
+        /// Parses a memory location from a string.
+        /// </summary>
+        /// <param name="in_token">The token to parse into a memory location (e.g. "IAR", "LR", "CTR", "GPR#", "R#", "0x82000000").</param>
+        public uint ParseAddressFromToken(string in_token)
+        {
+            var tokenDerefs = StringHelper.GetDereferenceCount(in_token);
+
+            if (tokenDerefs > 0)
+                in_token = StringHelper.TrimDereferences(in_token);
+
+            var addr = 0U;
+            var register = in_token.ToLower();
+            var processor = new XeDebugger(in_console).GetProcessor();
+
+            switch (register)
+            {
+                case "iar": addr = processor.IAR;       break;
+                case "lr":  addr = processor.LR;        break;
+                case "ctr": addr = (uint)processor.CTR; break;
+
+                default:
+                {
+                    if (processor.TryParseGPRByName(register, out var out_gpr))
+                    {
+                        addr = (uint)out_gpr;
+                        break;
+                    }
+
+                    // Assume address.
+                    addr = MemoryHelper.ChangeType<uint>(in_token);
+
+                    break;
+                }
+            }
+
+            return addr;
+        }
+
+        /// <summary>
+        /// Parses a memory location from a string.
+        /// </summary>
+        /// <param name="in_token">The token to parse into a memory location (e.g. "IAR", "LR", "CTR", "GPR#", "R#", "0x82000000").</param>
+        /// <param name="out_addr">The parsed virtual address.</param>
+        public bool TryParseAddressFromToken(string in_token, out uint out_addr)
+        {
+            try
+            {
+                out_addr = ParseAddressFromToken(in_token);
+                return true;
+            }
+            catch
+            {
+                out_addr = 0U;
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Dereferences a pointer.
+        /// </summary>
+        /// <param name="in_addr">The pointer to dereference from.</param>
+        /// <param name="in_count">The amount of times to dereference this pointer.</param>
+        public uint DereferencePointer(uint in_addr, int in_count)
+        {
+            while (in_count > 0)
+            {
+                in_addr = Read<uint>(in_addr);
+                in_count--;
+            }
+
+            return in_addr;
+        }
+
+        /// <summary>
         /// Scans the current foreground module for a byte pattern.
         /// </summary>
         /// <param name="in_memory">The buffer to scan (downloads the current foreground module if null).</param>
@@ -141,7 +204,8 @@ namespace XeSharp.Device.Memory
         /// <param name="in_mask">The mask of the pattern ('x' for scannable bytes, '?' for any byte).</param>
         /// <param name="in_moduleName">The name of the module to scan (used to get the address and size to scan).</param>
         /// <param name="in_isFirstResult">Determines whether this function returns the first match it finds, rather than all matches.</param>
-        public List<uint> ScanSignature(byte[] in_memory, byte[] in_pattern, string in_mask, string in_moduleName = "", bool in_isFirstResult = true)
+        /// <param name="in_isInvalidateModuleBuffer">Determines whether the current module buffer should be cleared and reloaded.</param>
+        public List<uint> ScanSignature(byte[] in_memory, byte[] in_pattern, string in_mask, string in_moduleName = "", bool in_isFirstResult = true, bool in_isInvalidateModuleBuffer = false)
         {
             var results = new List<uint>();
 
@@ -157,20 +221,25 @@ namespace XeSharp.Device.Memory
                 ? modules.Last().Value
                 : modules[in_moduleName];
 
+            // Clear module buffer if the owner changed.
+            if (_moduleBufferOwner != module || in_isInvalidateModuleBuffer)
+                _moduleBuffer = null;
+
             /* TODO: this could (and probably should) be optimised to scan
                      in chunks, rather than downloading the entire binary. */
-            var memory = in_memory ?? ReadBytes(module.BaseAddress, module.ImageSize);
+            _moduleBuffer = in_memory ?? _moduleBuffer ?? ReadBytes(module.BaseAddress, module.ImageSize);
 
-            for (uint i = 0; i < memory.Length; i++)
+            // TODO: implement progress event with ClientReadEventHandler.
+            for (uint i = 0; i < _moduleBuffer.Length; i++)
             {
                 int sigIndex;
 
                 for (sigIndex = 0; sigIndex < in_mask.Length; sigIndex++)
                 {
-                    if (memory.Length <= i + sigIndex)
+                    if (_moduleBuffer.Length <= i + sigIndex)
                         break;
 
-                    if (in_mask[sigIndex] != '?' && in_pattern[sigIndex] != memory[i + sigIndex])
+                    if (in_mask[sigIndex] != '?' && in_pattern[sigIndex] != _moduleBuffer[i + sigIndex])
                         break;
                 }
 
@@ -193,9 +262,25 @@ namespace XeSharp.Device.Memory
         /// <param name="in_mask">The mask of the pattern ('x' for scannable bytes, '?' for any byte).</param>
         /// <param name="in_moduleName">The name of the module to scan (used to get the address and size to scan).</param>
         /// <param name="in_isFirstResult">Determines whether this function returns the first match it finds, rather than all matches.</param>
-        public List<uint> ScanSignature(byte[] in_pattern, string in_mask, string in_moduleName = "", bool in_isFirstResult = true)
+        /// <param name="in_isInvalidateModuleBuffer">Determines whether the current module buffer should be cleared and reloaded.</param>
+        public List<uint> ScanSignature(byte[] in_pattern, string in_mask, string in_moduleName = "", bool in_isFirstResult = true, bool in_isInvalidateModuleBuffer = false)
         {
-            return ScanSignature(null, in_pattern, in_mask, in_moduleName, in_isFirstResult);
+            return ScanSignature(null, in_pattern, in_mask, in_moduleName, in_isFirstResult, in_isInvalidateModuleBuffer);
+        }
+
+        /// <summary>
+        /// Scans the current foreground module for an unmanaged value.
+        /// </summary>
+        /// <typeparam name="T">The type of data to scan for.</typeparam>
+        /// <param name="in_value">The data to scan for.</param>
+        /// <param name="in_moduleName">The name of the module to scan (used to get the address and size to scan).</param>
+        /// <param name="in_isFirstResult">Determines whether this function returns the first match it finds, rather than all matches.</param>
+        /// <param name="in_isInvalidateModuleBuffer">Determines whether the current module buffer should be cleared and reloaded.</param>
+        public List<uint> ScanSignature<T>(T in_value, string in_moduleName = "", bool in_isFirstResult = true, bool in_isInvalidateModuleBuffer = false) where T : unmanaged
+        {
+            var pattern = MemoryHelper.UnmanagedTypeToByteArray(in_value);
+
+            return ScanSignature(pattern, new string('x', pattern.Length), in_moduleName, in_isFirstResult, in_isInvalidateModuleBuffer);
         }
     }
 }
