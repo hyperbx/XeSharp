@@ -346,7 +346,6 @@ namespace XeSharp.Device.FileSystem
             if (in_path == "..")
                 return dir.Parent ?? dir;
 
-        WalkNodes:
             for (int i = 0; i < dir?.Nodes.Count(); i++)
             {
                 var node = dir.Nodes.ElementAt(i);
@@ -363,7 +362,7 @@ namespace XeSharp.Device.FileSystem
                     {
                         dir = dir.Parent;
                         paths.RemoveAt(j);
-                        goto WalkNodes;
+                        break;
                     }
 
                     // Paths are case-insensitive.
