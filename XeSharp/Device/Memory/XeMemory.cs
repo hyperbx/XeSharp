@@ -158,6 +158,8 @@ namespace XeSharp.Device.Memory
                 }
             }
 
+            addr = _console.Memory.DereferencePointer(addr, tokenDerefs);
+
             return addr;
         }
 
