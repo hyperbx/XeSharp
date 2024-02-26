@@ -14,6 +14,7 @@
   <ItemGroup>
     <PackageReference Include="Amicitia.IO" Version="1.0.0" />
     <PackageReference Include="Gee.External.Capstone" Version="2.3.0" />
+    <PackageReference Include="keystoneengine.csharp" Version="0.9.1.1" />
     <PackageReference Include="PropertyChanged.Fody" Version="4.1.0" />
   </ItemGroup>
 
