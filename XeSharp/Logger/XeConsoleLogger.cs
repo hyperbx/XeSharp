@@ -4,6 +4,11 @@
     {
         public void Log(object in_message, EXeLogLevel in_logLevel, string in_caller)
         {
+            WriteLine(string.IsNullOrEmpty(in_caller) ? in_message : $"[{in_caller}] {in_message}", in_logLevel);
+        }
+
+        public void Write(object in_str, EXeLogLevel in_logLevel)
+        {
             var oldColour = Console.ForegroundColor;
 
             switch (in_logLevel)
@@ -21,11 +26,14 @@
                     break;
             }
 
-            var message = in_message.ToString().Replace("\n", "\r\n");
-
-            Console.WriteLine(string.IsNullOrEmpty(in_caller) ? message : $"[{in_caller}] {message}");
+            Console.Write(in_str);
 
             Console.ForegroundColor = oldColour;
+        }
+
+        public void WriteLine(object in_str, EXeLogLevel in_logLevel)
+        {
+            Write(in_str.ToString().Replace("\n", "\r\n") + "\r\n", in_logLevel);
         }
     }
 }

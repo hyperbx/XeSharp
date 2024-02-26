@@ -61,5 +61,27 @@ namespace XeSharp.Logger
         {
             Error(in_message, string.Empty);
         }
+
+        public static void Write(object in_str, EXeLogLevel in_logLevel)
+        {
+            foreach (var logger in _handlers)
+                logger.Write(in_str, in_logLevel);
+        }
+
+        public static void Write(object in_str)
+        {
+            Write(in_str, EXeLogLevel.None);
+        }
+
+        public static void WriteLine(object in_str, EXeLogLevel in_logLevel)
+        {
+            foreach (var logger in _handlers)
+                logger.WriteLine(in_str, in_logLevel);
+        }
+
+        public static void WriteLine(object in_str)
+        {
+            WriteLine(in_str, EXeLogLevel.None);
+        }
     }
 }
