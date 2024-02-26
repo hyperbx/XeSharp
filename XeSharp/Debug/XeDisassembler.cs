@@ -41,6 +41,18 @@ namespace XeSharp.Debug
         }
 
         /// <summary>
+        /// Disassembles instructions from an address on the remote console.
+        /// </summary>
+        /// <param name="in_console">The console to read the instruction from.</param>
+        /// <param name="in_addr">The address of the instruction.</param>
+        /// <param name="in_count">The number of instructions to disassemble.</param>
+        public static PowerPcInstruction[] Disassemble(XeConsole in_console, uint in_addr, uint in_count)
+        {
+            return CapstoneDisassembler.CreatePowerPcDisassembler(Architecture)
+                .Disassemble(in_console.Memory.ReadBytes(in_addr, in_count * 4), in_addr);
+        }
+
+        /// <summary>
         /// Determines whether this instruction is a branch instruction.
         /// </summary>
         /// <param name="in_instr">The instruction to check.</param>
