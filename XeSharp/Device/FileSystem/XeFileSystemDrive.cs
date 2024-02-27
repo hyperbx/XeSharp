@@ -1,4 +1,4 @@
-﻿using System.Text;
+﻿using XeSharp.Device.FileSystem.IO;
 using XeSharp.Helpers;
 using XeSharp.Serialisation.INI;
 
@@ -33,17 +33,17 @@ namespace XeSharp.Device.FileSystem
         /// <summary>
         /// Creates a new drive instance.
         /// </summary>
-        /// <param name="in_console">The console this drive belongs to.</param>
+        /// <param name="in_filesystem">The filesystem this drive belongs to.</param>
         /// <param name="in_name">The name of this drive.</param>
         /// <param name="in_nodes">The nodes in this drive.</param>
-        public XeFileSystemDrive(XeConsole in_console, string in_name, List<XeFileSystemNode> in_nodes = null)
+        public XeFileSystemDrive(XeFileSystem in_filesystem, string in_name, List<XeFileSystemNode> in_nodes = null)
         {
             Name = in_name;
             Nodes = in_nodes;
-            Console = in_console;
+            FileSystem = in_filesystem;
             FriendlyName = GetFriendlyName();
 
-            Parse((string)in_console.Client.SendCommand($"drivefreespace name=\"{ToString()}\"").Results[0]);
+            Parse((string)in_filesystem.Console.Client.SendCommand($"drivefreespace name=\"{ToString()}\"").Results[0]);
         }
 
         /// <summary>
@@ -66,7 +66,7 @@ namespace XeSharp.Device.FileSystem
         /// </summary>
         public string GetFriendlyName()
         {
-            var data = XeFileSystem.Download(Console, $@"{Name}\name.txt");
+            var data = FileSystem.Download($@"{Name}\name.txt");
 
             if (data == null || data.Length <= 0)
                 return string.Empty;

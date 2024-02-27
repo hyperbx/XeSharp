@@ -44,9 +44,9 @@ namespace XeSharp.Device.FileSystem
         public bool IsRoot { get; internal set; }
 
         /// <summary>
-        /// The console pertaining to this node.
+        /// The filesystem containing this node.
         /// </summary>
-        public XeConsole Console { get; internal set; }
+        public XeFileSystem FileSystem { get; internal set; }
 
         /// <summary>
         /// The drive pertaining to this node.
@@ -83,7 +83,7 @@ namespace XeSharp.Device.FileSystem
             Type = in_node.Type;
             Attributes = in_node.Attributes;
             IsRoot = in_node.IsRoot;
-            Console = in_node.Console;
+            FileSystem = in_node.FileSystem;
             Drive = in_node.Drive;
             Parent = in_node.Parent;
             Nodes = in_node.Nodes;
@@ -92,9 +92,9 @@ namespace XeSharp.Device.FileSystem
         /// <summary>
         /// Creates a new node from space-separated values.
         /// </summary>
-        /// <param name="in_console">The console pertaining to this node.</param>
+        /// <param name="in_filesystem">The filesystem containing this node.</param>
         /// <param name="in_nodeCsv">The space-separated values for information about this node.</param>
-        public XeFileSystemNode(XeConsole in_console, string in_nodeCsv)
+        public XeFileSystemNode(XeFileSystem in_filesystem, string in_nodeCsv)
         {
             var ini = IniParser.DoInline(in_nodeCsv);
 
@@ -123,7 +123,7 @@ namespace XeSharp.Device.FileSystem
             if (ini[""].ContainsKey("hidden"))
                 Attributes |= EXeFileSystemNodeAttribute.Hidden;
 
-            Console = in_console;
+            FileSystem = in_filesystem;
         }
 
         /// <summary>
@@ -139,7 +139,7 @@ namespace XeSharp.Device.FileSystem
                     node.Delete();
             }
 
-            return XeFileSystem.Delete(Console, ToString(), Type);
+            return FileSystem.Delete(ToString(), Type);
         }
 
         /// <summary>
@@ -148,7 +148,7 @@ namespace XeSharp.Device.FileSystem
         /// </summary>
         public XeFileSystemNode Download()
         {
-            Data = XeFileSystem.Download(Console, ToString());
+            Data = FileSystem.Download(ToString());
             return this;
         }
 
@@ -159,7 +159,7 @@ namespace XeSharp.Device.FileSystem
         /// <param name="in_stream">The stream to write this node's data to.</param>
         public void Download(Stream in_stream)
         {
-            XeFileSystem.Download(Console, ToString(), in_stream);
+            FileSystem.Download(ToString(), in_stream);
         }
 
         /// <summary>
@@ -211,7 +211,7 @@ namespace XeSharp.Device.FileSystem
 
             ExceptionHelper.OperationCancelledHandler(
                 () => DownloadRecursive(this),
-                () => Console.Client.Flush());
+                () => FileSystem.Console.Client.Flush());
         }
 
         /// <summary>
@@ -223,8 +223,8 @@ namespace XeSharp.Device.FileSystem
                 return this;
 
             Nodes = IsRoot
-                ? Console.FileSystem.GetDrivesRoot(Console.FileSystem.IsFlashMemoryMapped, false).Nodes
-                : Console.FileSystem.GetNodesFromPath(ToString(), false, this);
+                ? FileSystem.GetDrivesRoot(FileSystem.IsFlashMemoryMapped(), false).Nodes
+                : FileSystem.GetNodesFromPath(ToString(), false, this);
 
             return this;
         }
@@ -449,7 +449,7 @@ namespace XeSharp.Device.FileSystem
                        Type == node.Type &&
                        Attributes == node.Attributes &&
                        IsRoot == node.IsRoot &&
-                       Console == node.Console &&
+                       FileSystem == node.FileSystem &&
                        Drive == node.Drive &&
                        Parent == node.Parent &&
                        Nodes == node.Nodes &&

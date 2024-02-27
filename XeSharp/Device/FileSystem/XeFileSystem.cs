@@ -6,19 +6,12 @@ namespace XeSharp.Device.FileSystem
 {
     public class XeFileSystem
     {
-        protected XeConsole _console;
+        internal XeConsole Console;
 
         /// <summary>
         /// The current navigated directory.
         /// </summary>
         public XeFileSystemNode CurrentDirectory { get; set; }
-
-        /// <summary>
-        /// Determines whether flash memory is mapped as a drive.
-        /// </summary>
-        public bool IsFlashMemoryMapped => GetDrives(false, false).Any(x => x.Name == "FLASH:");
-
-        public XeFileSystem() { }
 
         /// <summary>
         /// Creates a new filesystem instance.
@@ -27,7 +20,7 @@ namespace XeSharp.Device.FileSystem
         /// <param name="in_isFullFileSystemMapped">Determines whether the entire filesystem will be mapped in this instance.</param>
         public XeFileSystem(XeConsole in_console, bool in_isFullFileSystemMapped = true)
         {
-            _console = in_console;
+            Console = in_console;
 
             // Initialise root node.
             CurrentDirectory = GetDrivesRoot(in_isRecursiveNodes: in_isFullFileSystemMapped);
@@ -53,12 +46,20 @@ namespace XeSharp.Device.FileSystem
         }
 
         /// <summary>
+        /// Determines whether flash memory is mapped as a drive.
+        /// </summary>
+        public bool IsFlashMemoryMapped()
+        {
+            return GetDrives(false, false).Any(x => x.Name == "FLASH:");
+        }
+
+        /// <summary>
         /// Determines whether the specified file or directory exists.
         /// </summary>
         /// <param name="in_path">The path to check.</param>
         public bool Exists(string in_path)
         {
-            var response = _console.Client.SendCommand($"getfileattributes name=\"{ToAbsolutePath(in_path)}\"", false);
+            var response = Console.Client.SendCommand($"getfileattributes name=\"{ToAbsolutePath(in_path)}\"", false);
 
             return response.Status.ToHResult() != EXeStatusCode.XBDM_NOSUCHFILE;
         }
@@ -66,28 +67,15 @@ namespace XeSharp.Device.FileSystem
         /// <summary>
         /// Deletes a remote file or directory.
         /// </summary>
-        /// <param name="in_console">The console containing the file or directory.</param>
         /// <param name="in_path">The path to the file or directory to delete.</param>
-        /// <param name="in_type">The type of node to delete.</param>
-        public static XeResponse Delete(XeConsole in_console, string in_path, EXeFileSystemNodeType in_type = EXeFileSystemNodeType.File)
+        public XeResponse Delete(string in_path, EXeFileSystemNodeType in_type = EXeFileSystemNodeType.File)
         {
-            var cmd = $"delete name=\"{in_path}\"";
+            var cmd = $"delete name=\"{ToAbsolutePath(in_path)}\"";
 
             if (in_type == EXeFileSystemNodeType.Directory)
                 cmd += " dir";
 
-            return in_console.Client.SendCommand(cmd, false);
-        }
-
-        /// <summary>
-        /// Deletes a remote file or directory.
-        /// </summary>
-        /// <param name="in_path">The path to the file or directory to delete.</param>
-        public XeResponse Delete(string in_path)
-        {
-            var node = GetNodeFromPath(in_path);
-
-            return Delete(_console, node.ToString(), node.Type);
+            return Console.Client.SendCommand(cmd, false);
         }
 
         /// <summary>
@@ -96,30 +84,14 @@ namespace XeSharp.Device.FileSystem
         /// <param name="in_console">The console containing the file.</param>
         /// <param name="in_path">The path to the file to download.</param>
         /// <param name="in_stream">The stream to write the file's data to.</param>
-        public static void Download(XeConsole in_console, string in_path, Stream in_stream)
+        public void Download(string in_path, Stream in_stream)
         {
-            var response = in_console.Client.SendCommand($"getfile name=\"{in_path}\"", false);
+            var response = Console.Client.SendCommand($"getfile name=\"{in_path}\"", false);
 
             if (response.Status.ToHResult() != EXeStatusCode.XBDM_BINRESPONSE)
                 return;
 
-            in_console.Client.CopyTo(in_stream);
-        }
-
-        /// <summary>
-        /// Downloads the contents of a file into a buffer.
-        /// <para>Not recommended for large files.</para>
-        /// </summary>
-        /// <param name="in_console">The console containing the file.</param>
-        /// <param name="in_path">The path to the file to download.</param>
-        public static byte[] Download(XeConsole in_console, string in_path)
-        {
-            var response = in_console.Client.SendCommand($"getfile name=\"{in_path}\"", false);
-
-            if (response.Status.ToHResult() != EXeStatusCode.XBDM_BINRESPONSE)
-                return [];
-
-            return in_console.Client.ReadBytes();
+            Console.Client.CopyTo(in_stream);
         }
 
         /// <summary>
@@ -129,7 +101,12 @@ namespace XeSharp.Device.FileSystem
         /// <param name="in_path">The path to the file to download.</param>
         public byte[] Download(string in_path)
         {
-            return Download(_console, GetNodeFromPath(in_path).ToString());
+            var response = Console.Client.SendCommand($"getfile name=\"{in_path}\"", false);
+
+            if (response.Status.ToHResult() != EXeStatusCode.XBDM_BINRESPONSE)
+                return [];
+
+            return Console.Client.ReadBytes();
         }
 
         /// <summary>
@@ -145,15 +122,17 @@ namespace XeSharp.Device.FileSystem
             if (!in_isOverwrite && Exists(in_destination))
                 throw new IOException("The destination file already exists.");
 
-            var response = _console.Client.SendCommand(
+            CreateDirectory(Path.GetDirectoryName(in_destination));
+
+            var response = Console.Client.SendCommand(
                 $"sendfile name=\"{ToAbsolutePath(in_destination)}\" length={in_data.Length}");
 
             if (response.Status.ToHResult() != EXeStatusCode.XBDM_READYFORBIN)
                 throw new IOException("An internal error occurred and the data could not be sent.");
 
             // TODO: stream?
-            _console.Client.WriteBytes(in_data);
-            _console.Client.Pop();
+            Console.Client.WriteBytes(in_data);
+            Console.Client.Pop();
         }
 
         /// <summary>
@@ -201,9 +180,19 @@ namespace XeSharp.Device.FileSystem
             ArgumentException.ThrowIfNullOrEmpty(in_path);
 
             var path = ToAbsolutePath(in_path);
-            var response = _console.Client.SendCommand($"mkdir name=\"{path}\"", false);
+            var pathConcat = string.Empty;
 
-            if (response.Status.ToHResult() != EXeStatusCode.XBDM_NOERR)
+            XeResponse response = null;
+
+            foreach (var dir in path.Split('\\'))
+            {
+                pathConcat += $"{dir}\\";
+
+                // Create paths sequentially.
+                response = Console.Client.SendCommand($"mkdir name=\"{pathConcat}\"", false);
+            }
+
+            if (response?.Status.ToHResult() != EXeStatusCode.XBDM_NOERR)
                 return null;
 
             return GetNodeFromPath(path);
@@ -221,10 +210,10 @@ namespace XeSharp.Device.FileSystem
             if (in_isFlashMemoryMapped)
             {
                 // Map flash memory in drive list.
-                _console.Client.SendCommand("drivemap internal");
+                Console.Client.SendCommand("drivemap internal");
             }
 
-            var drives = _console.Client.SendCommand("drivelist", false)?.Results as string[];
+            var drives = Console.Client.SendCommand("drivelist", false)?.Results as string[];
 
             if (drives == null || drives.Length <= 0)
                 return result;
@@ -238,7 +227,7 @@ namespace XeSharp.Device.FileSystem
             {
                 var driveName = ini[""][driveNameKey] + ':';
 
-                var drive = new XeFileSystemDrive(_console, driveName);
+                var drive = new XeFileSystemDrive(this, driveName);
                 {
                     drive.Nodes = in_isRecursiveNodes
                         ? GetNodesFromPath($@"{driveName}\", in_parent: drive)
@@ -266,7 +255,7 @@ namespace XeSharp.Device.FileSystem
                 Type = EXeFileSystemNodeType.Directory,
                 Attributes = EXeFileSystemNodeAttribute.ReadOnly,
                 IsRoot = true,
-                Console = _console
+                FileSystem = this
             };
 
             var drives = GetDrives(in_isFlashMemoryMapped, in_isRecursiveNodes);
@@ -289,14 +278,14 @@ namespace XeSharp.Device.FileSystem
         {
             var result = new List<XeFileSystemNode>();
             var path = ToAbsolutePath(in_path);
-            var nodeCsvs = _console.Client.SendCommand($"dirlist name=\"{path}\"", false)?.Results as string[];
+            var nodeCsvs = Console.Client.SendCommand($"dirlist name=\"{path}\"", false)?.Results as string[];
 
             if (nodeCsvs == null || nodeCsvs.Length <= 0)
                 return result;
 
             foreach (var nodeCsv in nodeCsvs)
             {
-                var node = new XeFileSystemNode(_console, nodeCsv);
+                var node = new XeFileSystemNode(this, nodeCsv);
 
                 if (in_parent != null)
                 {
