@@ -71,11 +71,7 @@ namespace XeSharp.Device.FileSystem
             if (data == null || data.Length <= 0)
                 return string.Empty;
 
-            // Skip byte order mark.
-            if (data[0] == 0xFE && data[1] == 0xFF)
-                data = data.Skip(2).ToArray();
-
-            return Encoding.BigEndianUnicode.GetString(data);
+            return ByteOrderMark.DecodeFromBOM(data);
         }
 
         /// <summary>
