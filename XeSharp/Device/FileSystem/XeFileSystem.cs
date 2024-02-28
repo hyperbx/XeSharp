@@ -219,6 +219,32 @@ namespace XeSharp.Device.FileSystem
         }
 
         /// <summary>
+        /// Gets a logical drive on the console by name or from a path.
+        /// </summary>
+        /// <param name="in_driveName">The name of the drive to find.</param>
+        /// <param name="in_isFlashMemoryMapped">Determines whether flash memory will be mapped in the list (only applies once per session).</param>
+        public XeFileSystemDrive GetDrive(string in_driveName, bool in_isFlashMemoryMapped = true)
+        {
+            var paths     = in_driveName.Split(new char[] { '\\', '/' }, StringSplitOptions.RemoveEmptyEntries);
+            var queryName = paths[0].ToLower();
+
+            if (!queryName.EndsWith(':'))
+                queryName += ':';
+
+            foreach (var drive in GetDrives(in_isFlashMemoryMapped, false))
+            {
+                var driveName = drive.Name.ToLower();
+
+                if (driveName != queryName)
+                    continue;
+
+                return drive;
+            }
+
+            return null;
+        }
+
+        /// <summary>
         /// Gets all logical drives on the console.
         /// </summary>
         /// <param name="in_isFlashMemoryMapped">Determines whether flash memory will be mapped in the list (only applies once per session).</param>
