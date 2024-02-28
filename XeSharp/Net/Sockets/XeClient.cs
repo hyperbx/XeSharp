@@ -398,24 +398,71 @@ namespace XeSharp.Net.Sockets
             if (in_data.Length > uint.MaxValue)
                 throw new InvalidDataException($"The input buffer is too large ({uint.MaxValue:N0} bytes max).");
 
-            var bytesSent = 0U;
+            var bytesWritten = 0U;
             var bytesTotal = (uint)in_data.Length;
             var isBegin = true;
 
-            while (bytesSent < bytesTotal)
+            while (bytesWritten < bytesTotal)
             {
-                var bufferSize = Math.Min(0x1000, bytesTotal - bytesSent);
+                var bufferSize = Math.Min(0x1000, bytesTotal - bytesWritten);
                 var buffer = new byte[bufferSize];
 
-                Buffer.BlockCopy(in_data, (int)bytesSent, buffer, 0, (int)bufferSize);
+                Buffer.BlockCopy(in_data, (int)bytesWritten, buffer, 0, (int)bufferSize);
 
                 await Client.GetStream().WriteAsync(buffer);
 
-                bytesSent += bufferSize;
+                bytesWritten += bufferSize;
 
-                OnWrite(new ClientWriteEventArgs(isBegin, bytesSent, bytesTotal));
+                OnWrite(new ClientWriteEventArgs(isBegin, bytesWritten, bytesTotal));
 
                 isBegin = false;
+            }
+        }
+
+        /// <summary>
+        /// Streams all bytes from the source stream to the client stream.
+        /// <para>The client only supports a maximum buffer size of 4,294,967,295 bytes.</para>
+        /// <para>Used for writing data for binary responses.</para>
+        /// <para>Recommended for large binary responses.</para>
+        /// <para>This operation cannot be cancelled.</para>
+        /// </summary>
+        /// <param name="in_source">The source stream to read from.</param>
+        /// <param name="in_bufferSize">The size of the buffer to copy.</param>
+        public void CopyFrom(Stream in_source, int in_bufferSize = 81920)
+        {
+            var bytesWritten = 0U;
+            var bytesTotal = (uint)in_source.Length;
+
+            if (bytesTotal <= 0)
+                return;
+
+            // Allocate resizable buffer with preset size.
+            var buffer = ArrayPool<byte>.Shared.Rent(in_bufferSize);
+
+            try
+            {
+                var isBegin = true;
+
+                while (bytesWritten < bytesTotal)
+                {
+                    var bufferSize = Math.Min(0x1000, bytesTotal - bytesWritten);
+                    var bufferRead = in_source.Read(buffer, 0, (int)bufferSize);
+
+                    if (bufferRead == 0)
+                        break;
+
+                    Client.GetStream().Write(buffer, 0, bufferRead);
+
+                    bytesWritten += (uint)bufferRead;
+
+                    OnWrite(new ClientWriteEventArgs(isBegin, bytesWritten, bytesTotal));
+
+                    isBegin = false;
+                }
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(buffer);
             }
         }
 

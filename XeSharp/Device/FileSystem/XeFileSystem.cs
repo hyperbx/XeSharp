@@ -81,7 +81,6 @@ namespace XeSharp.Device.FileSystem
         /// <summary>
         /// Downloads the contents of a file into the input stream.
         /// </summary>
-        /// <param name="in_console">The console containing the file.</param>
         /// <param name="in_path">The path to the file to download.</param>
         /// <param name="in_stream">The stream to write the file's data to.</param>
         public void Download(string in_path, Stream in_stream)
@@ -110,29 +109,49 @@ namespace XeSharp.Device.FileSystem
         }
 
         /// <summary>
+        /// Uploads stream data to a file on the console.
+        /// </summary>
+        /// <param name="in_stream">The stream to write the file's data to.</param>
+        /// <param name="in_destination">The remote path to write to.</param>
+        /// <param name="in_isOverwrite">Determines whether the remote file can be overwritten if it already exists.</param>
+        public void Upload(Stream in_stream, string in_destination, bool in_isOverwrite = true)
+        {
+            ArgumentException.ThrowIfNullOrEmpty(in_destination);
+
+            if (Exists(in_destination))
+            {
+                if (!in_isOverwrite)
+                    throw new IOException("The destination file already exists.");
+
+                Delete(in_destination);
+            }
+
+            CreateDirectory(Path.GetDirectoryName(in_destination));
+
+            var response = Console.Client.SendCommand(
+                $"sendfile name=\"{ToAbsolutePath(in_destination)}\" length={in_stream.Length}");
+
+            if (response.Status.ToHResult() != EXeStatusCode.XBDM_READYFORBIN)
+                throw new IOException("An internal error occurred and the data could not be sent.");
+
+            Console.Client.CopyFrom(in_stream);
+            Console.Client.Pop();
+        }
+
+        /// <summary>
         /// Uploads data to a file on the console.
+        /// <para>Not recommended for large files.</para>
         /// </summary>
         /// <param name="in_data">The data to write.</param>
         /// <param name="in_destination">The remote path to write to.</param>
         /// <param name="in_isOverwrite">Determines whether the remote file can be overwritten if it already exists.</param>
         public void Upload(byte[] in_data, string in_destination, bool in_isOverwrite = true)
         {
-            ArgumentException.ThrowIfNullOrEmpty(in_destination);
+            if (in_data.Length <= 0)
+                return;
 
-            if (!in_isOverwrite && Exists(in_destination))
-                throw new IOException("The destination file already exists.");
-
-            CreateDirectory(Path.GetDirectoryName(in_destination));
-
-            var response = Console.Client.SendCommand(
-                $"sendfile name=\"{ToAbsolutePath(in_destination)}\" length={in_data.Length}");
-
-            if (response.Status.ToHResult() != EXeStatusCode.XBDM_READYFORBIN)
-                throw new IOException("An internal error occurred and the data could not be sent.");
-
-            // TODO: stream?
-            Console.Client.WriteBytes(in_data);
-            Console.Client.Pop();
+            using (var memoryStream = new MemoryStream(in_data))
+                Upload(memoryStream, in_destination, in_isOverwrite);
         }
 
         /// <summary>
@@ -148,7 +167,8 @@ namespace XeSharp.Device.FileSystem
             if (!File.Exists(in_source))
                 return;
 
-            Upload(File.ReadAllBytes(in_source), in_destination, in_isOverwrite);
+            using (var fileStream = new FileStream(in_source, FileMode.Open, FileAccess.Read))
+                Upload(fileStream, in_destination, in_isOverwrite);
         }
 
         /// <summary>
