@@ -368,7 +368,7 @@ namespace XeSharp.Device.FileSystem
                 throw new NotSupportedException("The input node must be a directory.");
 
             var paths = in_path.Split(new char[] { '\\', '/' }, StringSplitOptions.RemoveEmptyEntries).ToList();
-            var dir = in_node ?? CurrentDirectory;
+            var dir   = in_node ?? CurrentDirectory;
 
             if (dir == null)
                 return null;
@@ -388,28 +388,30 @@ namespace XeSharp.Device.FileSystem
                 if (node.Type == EXeFileSystemNodeType.Directory)
                     node.Refresh();
 
-                for (int j = 0; j < paths.Count; j++)
+                var path = paths[0];
+
+                // Visit parent directory of current node.
+                if (path == "..")
                 {
-                    var path = paths[j];
-
-                    // Visit parent directory of current node.
-                    if (path == ".." && dir.Parent != null)
-                    {
+                    if (dir.Parent != null)
                         dir = dir.Parent;
-                        paths.RemoveAt(j);
-                        break;
-                    }
 
-                    // Paths are case-insensitive.
-                    if (node.Name.ToLower() != path.ToLower())
-                        continue;
+                    paths.RemoveAt(0);
 
-                    if (paths.Count == 1)
-                        return node;
-
-                    if (node.Type == EXeFileSystemNodeType.Directory)
-                        dir = GetNodeFromPath(string.Join('\\', paths.Skip(1)), node);
+                    continue;
                 }
+
+                // Paths are case-insensitive.
+                if (node.Name.ToLower() != path.ToLower())
+                    continue;
+
+                if (paths.Count == 1)
+                    return node;
+
+                if (node.Type != EXeFileSystemNodeType.Directory)
+                    continue;
+
+                dir = GetNodeFromPath(string.Join('\\', paths.Skip(1)), node);
             }
 
             return dir;
