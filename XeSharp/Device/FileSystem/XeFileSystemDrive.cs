@@ -75,6 +75,30 @@ namespace XeSharp.Device.FileSystem
         }
 
         /// <summary>
+        /// Determines whether space is available to fit the specified size.
+        /// </summary>
+        /// <param name="in_size">The size to check.</param>
+        public bool IsSpaceAvailable(ulong in_size)
+        {
+            return FreeSpace > in_size;
+        }
+
+        /// <summary>
+        /// Determines whether space is available to fit the specified local file or directory.
+        /// </summary>
+        /// <param name="in_localPath">The local path to check the size with.</param>
+        public bool IsSpaceAvailable(string in_localPath)
+        {
+            if (File.Exists(in_localPath))
+                return IsSpaceAvailable((ulong)new FileInfo(in_localPath).Length);
+
+            if (Directory.Exists(in_localPath))
+                return IsSpaceAvailable((ulong)FileSystemHelper.GetDirectorySize(in_localPath, false));
+
+            return false;
+        }
+
+        /// <summary>
         /// Gets friendly information about this drive.
         /// </summary>
         public override string GetInfo(bool in_isRecursiveNodes = false)
