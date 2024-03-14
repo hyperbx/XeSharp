@@ -16,7 +16,11 @@
 
         public XeClientInfo(XeClient in_client)
         {
-            IsFreebootXBDM = in_client.SendCommand("whomadethis").Message.Contains("Natelx");
+            var author = in_client.SendCommand("whomadethis", false);
+
+            if (author.Status.ToHResult() == EXeStatusCode.XBDM_NOERR)
+                IsFreebootXBDM = author.Message.Contains("Natelx");
+
             DebuggerVersion = new Version(in_client.SendCommand("dmversion").Message ?? "0.0.0.0");
         }
     }
