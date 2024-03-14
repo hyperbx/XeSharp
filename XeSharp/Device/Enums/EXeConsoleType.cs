@@ -7,16 +7,16 @@
         /// <summary>
         /// This console is a development kit.
         /// </summary>
-        DevKit,
+        Development,
 
         /// <summary>
         /// This console is a test kit.
         /// </summary>
-        TestKit,
+        Test,
 
         /// <summary>
-        /// This console is a reviewer kit.
+        /// This console is a demo kit.
         /// </summary>
-        ReviewerKit
+        Demo
     }
 }

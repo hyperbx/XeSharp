@@ -74,18 +74,33 @@
 
             if (!string.IsNullOrEmpty(consoleType))
             {
-                Type = Enum.Parse<EXeConsoleType>(consoleType, true);
-
-                GuessedAppearance = Type switch
+                Type = consoleType.ToLower() switch
                 {
-                    EXeConsoleType.DevKit => EXeConsoleAppearance.Black,
-                    EXeConsoleType.TestKit => EXeConsoleAppearance.White,
-                    EXeConsoleType.ReviewerKit => EXeConsoleAppearance.Black,
-                    _ => EXeConsoleAppearance.Blue,
+                    "devkit"      => EXeConsoleType.Development,
+                    "testkit"     => EXeConsoleType.Test,
+                    "reviewerkit" => EXeConsoleType.Demo,
+                    _             => EXeConsoleType.Development
                 };
 
-                if (!IsExtendedRAM)
+                GuessedAppearance = Type == EXeConsoleType.Development
+                    ? EXeConsoleAppearance.Black
+                    : EXeConsoleAppearance.White;
+
+                if (IsExtendedRAM)
+                {
+                    if (Type == EXeConsoleType.Development)
+                    {
+                        GuessedAppearance = EXeConsoleAppearance.Blue;
+                    }
+                    else if (Type == EXeConsoleType.Test)
+                    {
+                        GuessedAppearance = EXeConsoleAppearance.BlueGrey;
+                    }
+                }
+                else
+                {
                     GuessedAppearance |= EXeConsoleAppearance.NoSideCar;
+                }
             }
 
             var systemInfo = in_console.Client.SendCommand("systeminfo")?.Results as string[];
