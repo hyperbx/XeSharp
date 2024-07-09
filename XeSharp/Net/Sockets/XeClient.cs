@@ -1,4 +1,5 @@
 ﻿using System.Buffers;
+using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using XeSharp.Helpers;
@@ -8,6 +9,8 @@ namespace XeSharp.Net.Sockets
 {
     public class XeClient : IDisposable
     {
+        public const int XbdmPort = 730;
+
         internal TcpClient Client { get; private set; }
         internal StreamReader Reader { get; private set; }
         internal BinaryWriter Writer { get; private set; }
@@ -69,7 +72,20 @@ namespace XeSharp.Net.Sockets
 
             HostName = in_hostName;
 
-            Client = new TcpClient(in_hostName, 730);
+            Client = new TcpClient();
+
+            /* Don't resolve hostname if an IP was provided.
+               If we try to resolve IP as a host, then it can
+               act weird on IPv6-enabled devices. */
+            if (IPAddress.TryParse(in_hostName, out var ip))
+            {
+                Client.Connect(ip, XbdmPort);
+            }
+            else
+            {
+                Client.Connect(HostName, XbdmPort);
+            }
+
             Reader = new StreamReader(Client.GetStream());
             Writer = new BinaryWriter(Client.GetStream());
 
